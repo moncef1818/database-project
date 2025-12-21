@@ -6,7 +6,7 @@
 -- Module: Introduction to Databases
 -- Instructor: Dr. NAIT-HAMOUD
 -- Academic Year: 2025/2026
--- 
+--
 -- Description: This file contains all SQL code for Labs 1 through 4,
 --              including DDL, DML, Views, Functions, Transactions, and Triggers.
 -- ============================================================================
@@ -36,7 +36,7 @@
 CREATE TABLE Department (
     Department_id integer,
     name varchar(25) NOT NULL,
-    
+
     -- Constraints
     CONSTRAINT UN_Department_Name UNIQUE (name),
     CONSTRAINT PK_Department PRIMARY KEY (Department_id)
@@ -55,7 +55,7 @@ CREATE TABLE Student (
     Phone varchar(10) DEFAULT NULL,
     Fax varchar(10) DEFAULT NULL,
     Email varchar(100) DEFAULT NULL,
-    
+
     -- Constraints
     CONSTRAINT PK_Student PRIMARY KEY (Student_ID)
 );
@@ -67,10 +67,10 @@ CREATE TABLE Course (
     Department_ID int4 NOT NULL,
     name varchar(60) NOT NULL,
     Description varchar(1000),
-    
+
     -- Constraints
     CONSTRAINT PK_Course PRIMARY KEY (Course_ID, Department_ID),
-    CONSTRAINT FK_Course_Department FOREIGN KEY (Department_ID) 
+    CONSTRAINT FK_Course_Department FOREIGN KEY (Department_ID)
         REFERENCES Department (Department_id)
         ON UPDATE RESTRICT ON DELETE RESTRICT
 );
@@ -86,11 +86,11 @@ CREATE TABLE Instructor (
     Phone varchar(10) DEFAULT NULL,
     Fax varchar(10) DEFAULT NULL,
     Email varchar(100) DEFAULT NULL,
-    
+
     -- Constraints
     CONSTRAINT CK_Instructor_Rank CHECK (Rank IN ('Substitute','MCB', 'MCA', 'PROF')),
     CONSTRAINT PK_Instructor PRIMARY KEY (Instructor_ID),
-    CONSTRAINT FK_Instructor_Department_ID FOREIGN KEY (Department_ID) 
+    CONSTRAINT FK_Instructor_Department_ID FOREIGN KEY (Department_ID)
         REFERENCES Department (Department_id)
         ON UPDATE RESTRICT ON DELETE RESTRICT
 );
@@ -99,9 +99,9 @@ CREATE TABLE Instructor (
 -- Purpose: Stores classroom and facility information
 CREATE TABLE Room (
     Building varchar(1),
-    RoomNo varchar(10),
+    RoomNo varchar(20),
     Capacity integer CHECK (Capacity >= 1),
-    
+
     -- Constraints
     CONSTRAINT PK_Room PRIMARY KEY (Building, RoomNo)
 );
@@ -119,16 +119,16 @@ CREATE TABLE Reservation (
     Start_Time time NOT NULL DEFAULT CURRENT_TIME,
     End_Time time NOT NULL DEFAULT '23:00:00',
     Hours_Number integer NOT NULL,
-    
+
     -- Constraints
     CONSTRAINT PK_Reservation PRIMARY KEY (Reservation_ID),
-    CONSTRAINT FK_Reservation_Room FOREIGN KEY (Building, RoomNo) 
+    CONSTRAINT FK_Reservation_Room FOREIGN KEY (Building, RoomNo)
         REFERENCES Room (Building, RoomNo)
         ON UPDATE RESTRICT ON DELETE RESTRICT,
-    CONSTRAINT FK_Reservation_Course FOREIGN KEY (Course_ID, Department_ID) 
+    CONSTRAINT FK_Reservation_Course FOREIGN KEY (Course_ID, Department_ID)
         REFERENCES Course (Course_ID, Department_ID)
         ON UPDATE RESTRICT ON DELETE RESTRICT,
-    CONSTRAINT FK_Reservation_Instructor FOREIGN KEY (Instructor_ID) 
+    CONSTRAINT FK_Reservation_Instructor FOREIGN KEY (Instructor_ID)
         REFERENCES Instructor (Instructor_ID)
         ON UPDATE RESTRICT ON DELETE RESTRICT,
     CONSTRAINT CK_Reservation_Hours_Number CHECK (Hours_Number >= 1),
@@ -148,7 +148,7 @@ CREATE TABLE Enrollment (
     Department_ID integer NOT NULL,
     Enrollment_Date date NOT NULL DEFAULT CURRENT_DATE,
     Status varchar(20) DEFAULT 'Active',
-    
+
     -- Constraints
     CONSTRAINT FK_Enrollment_Student FOREIGN KEY (Student_ID)
         REFERENCES Student (Student_ID)
@@ -172,7 +172,7 @@ CREATE TABLE Grade (
     Max_Points numeric(5,2) NOT NULL,
     Grade_Date date NOT NULL DEFAULT CURRENT_DATE,
     Comments varchar(500),
-    
+
     -- Constraints
     CONSTRAINT FK_Grade_Student FOREIGN KEY (Student_ID)
         REFERENCES Student (Student_ID)
@@ -256,7 +256,7 @@ INSERT INTO Reservation VALUES ('21','B','022','1','1','4','2003/09/02','08:30:0
 
 -- Insert Sample Enrollments
 INSERT INTO Enrollment (Student_ID, Course_ID, Department_ID, Enrollment_Date, Status)
-VALUES 
+VALUES
 (1, 1, 1, '2006-09-01', 'Active'),
 (2, 1, 1, '2006-09-01', 'Active'),
 (3, 2, 1, '2006-09-01', 'Active'),
@@ -278,7 +278,7 @@ VALUES
 -- Regular View: Instructor Reservations
 -- Purpose: Real-time view of instructor workload statistics
 CREATE VIEW instructor_reservations AS
-SELECT 
+SELECT
     i.Instructor_ID,
     i.First_Name || ' ' || i.Last_Name AS Instructor_Name,
     i.Rank,
@@ -296,7 +296,7 @@ ORDER BY Total_Reservations DESC;
 -- Materialized View: Instructor Reservations Summary
 -- Purpose: Pre-computed statistics for faster access (requires periodic refresh)
 CREATE MATERIALIZED VIEW instructor_reservations_summary AS
-SELECT 
+SELECT
     i.Instructor_ID,
     i.First_Name || ' ' || i.Last_Name AS Instructor_Name,
     i.Rank,
@@ -325,7 +325,7 @@ ORDER BY Total_Reservations DESC;
 -- ----------------------------------------------------------------------------
 
 -- Query 1: List all student names
-SELECT Last_Name, First_Name 
+SELECT Last_Name, First_Name
 FROM Student;
 
 -- Query 2: Students from a specific city
@@ -344,7 +344,7 @@ FROM Instructor
 WHERE Last_Name LIKE '%E_';
 
 -- Query 5: Instructors sorted by department, last name, first name
-SELECT 
+SELECT
     d.name AS Department_Name,
     i.Last_Name,
     i.First_Name,
@@ -373,7 +373,7 @@ WHERE Description LIKE '%Licence%';
 -- ----------------------------------------------------------------------------
 
 -- Query 9: Course costs (1 hour = 3000 DA)
-SELECT 
+SELECT
     c.Course_ID,
     c.name AS Course_Name,
     SUM(r.Hours_Number) AS Total_Hours,
@@ -384,11 +384,11 @@ GROUP BY c.Course_ID, c.name
 ORDER BY Total_Cost_DA DESC;
 
 -- Query 10: Courses costing between 25000 and 40000 DA
-SELECT 
+SELECT
     Course_Name,
     Total_Cost_DA
 FROM (
-    SELECT 
+    SELECT
         c.name AS Course_Name,
         SUM(r.Hours_Number) * 3000 AS Total_Cost_DA
     FROM Course c
@@ -398,7 +398,7 @@ FROM (
 WHERE Total_Cost_DA BETWEEN 25000 AND 40000;
 
 -- Query 11: Average and maximum room capacity
-SELECT 
+SELECT
     AVG(Capacity) AS Average_Capacity,
     MAX(Capacity) AS Maximum_Capacity,
     MIN(Capacity) AS Minimum_Capacity,
@@ -406,7 +406,7 @@ SELECT
 FROM Room;
 
 -- Query 12: Rooms with below-average capacity
-SELECT 
+SELECT
     Building,
     RoomNo,
     Capacity
@@ -419,7 +419,7 @@ ORDER BY Capacity;
 -- ----------------------------------------------------------------------------
 
 -- Query 13: Instructors from SADS or CCS (using IN)
-SELECT 
+SELECT
     i.Last_Name,
     i.First_Name,
     d.name AS Department
@@ -430,7 +430,7 @@ ORDER BY d.name, i.Last_Name;
 
 
 -- Query 14: Instructors NOT in SADS or CCS
-SELECT 
+SELECT
     i.Last_Name,
     i.First_Name,
     d.name AS Department
@@ -440,7 +440,7 @@ WHERE d.name NOT IN ('SADS', 'CCS')
 ORDER BY d.name;
 
 -- Query 15: Students sorted by city
-SELECT 
+SELECT
     Last_Name,
     First_Name,
     City,
@@ -453,7 +453,7 @@ ORDER BY City;
 -- ----------------------------------------------------------------------------
 
 -- Query 16: Number of courses per department
-SELECT 
+SELECT
     d.name AS Department_Name,
     COUNT(c.Course_ID) AS Number_Of_Courses
 FROM Department d
@@ -462,7 +462,7 @@ GROUP BY d.name
 ORDER BY Number_Of_Courses DESC;
 
 -- Query 17: Departments with 3+ courses
-SELECT 
+SELECT
     d.name AS Department_Name,
     COUNT(c.Course_ID) AS Number_Of_Courses
 FROM Department d
@@ -472,7 +472,7 @@ HAVING COUNT(c.Course_ID) >= 3
 ORDER BY Number_Of_Courses DESC;
 
 -- Query 18: Instructors with at least 2 reservations (using view)
-SELECT 
+SELECT
     Instructor_Name,
     Total_Reservations
 FROM instructor_reservations
@@ -480,18 +480,18 @@ WHERE Total_Reservations >= 2
 ORDER BY Total_Reservations DESC;
 
 -- Query 19: Instructors with most reservations (using ALL)
-SELECT 
+SELECT
     Instructor_Name,
     Total_Reservations
 FROM instructor_reservations
 WHERE Total_Reservations >= ALL (
-    SELECT Total_Reservations 
+    SELECT Total_Reservations
     FROM instructor_reservations
 )
 ORDER BY Total_Reservations DESC;
 
 -- Query 20: Instructors without reservations
-SELECT 
+SELECT
     i.Last_Name,
     i.First_Name,
     d.name AS Department
@@ -529,7 +529,7 @@ WHERE Capacity < (SELECT AVG(Capacity) FROM Room);
 UPDATE Course c
 SET Description = 'Updated: ' || c.Description
 FROM Department d
-WHERE c.Department_ID = d.Department_id 
+WHERE c.Department_ID = d.Department_id
 AND d.name = 'SADS'
 AND c.Description IS NOT NULL
 AND c.Description != '';
@@ -539,7 +539,7 @@ AND c.Description != '';
 -- ----------------------------------------------------------------------------
 
 -- Set Operation Example 1: UNION - All contacts
-SELECT 
+SELECT
     'Instructor' AS Type,
     First_Name || ' ' || Last_Name AS Full_Name,
     Email
@@ -548,7 +548,7 @@ WHERE Email IS NOT NULL
 
 UNION
 
-SELECT 
+SELECT
     'Student' AS Type,
     First_Name || ' ' || Last_Name AS Full_Name,
     Email
@@ -569,7 +569,7 @@ FROM Grade
 ORDER BY Student_ID, Course_ID;
 
 -- Set Operation Example 3: EXCEPT - Enrolled students without grades
-SELECT 
+SELECT
     e.Student_ID,
     s.First_Name || ' ' || s.Last_Name AS Student_Name,
     c.name AS Course_Name
@@ -579,7 +579,7 @@ JOIN Course c ON e.Course_ID = c.Course_ID
 
 EXCEPT
 
-SELECT 
+SELECT
     g.Student_ID,
     s.First_Name || ' ' || s.Last_Name AS Student_Name,
     c.name AS Course_Name
@@ -607,7 +607,7 @@ RETURNS TABLE(
     room_number varchar(10),
     room_capacity integer
 ) AS $$
-    SELECT 
+    SELECT
         Building,
         RoomNo,
         Capacity
@@ -685,7 +685,7 @@ BEGIN;
     -- Insert enrollment record
     INSERT INTO Enrollment (Student_ID, Course_ID, Department_ID, Enrollment_Date, Status)
     VALUES (1, 2, 1, '2006-09-15', 'Active');
-    
+
     -- Create initial grade placeholder
     INSERT INTO Grade (Student_ID, Course_ID, Department_ID, Grade_Type, Grade_Value, Max_Points, Grade_Date, Comments)
     VALUES (1, 2, 1, 'Initial', 0, 0, '2006-09-15', 'Enrollment placeholder');
@@ -713,14 +713,14 @@ BEGIN;
 
     -- Store old capacity for audit
     INSERT INTO Room_Capacity_History (Building, RoomNo, Old_Capacity, New_Capacity)
-    SELECT 
+    SELECT
         Building,
         RoomNo,
         Capacity,
         25  -- New capacity
     FROM Room
     WHERE Building = 'B' AND RoomNo = '020';
-    
+
     -- Update room capacity
     UPDATE Room
     SET Capacity = 25
@@ -739,17 +739,17 @@ BEGIN;
     SAVEPOINT grade1;
     INSERT INTO Grade (Student_ID, Course_ID, Department_ID, Grade_Type, Grade_Value, Max_Points, Grade_Date)
     VALUES (1, 1, 1, 'Quiz', 18, 20, '2006-10-20');
-    
+
     -- Grade 2: Valid
     SAVEPOINT grade2;
     INSERT INTO Grade (Student_ID, Course_ID, Department_ID, Grade_Type, Grade_Value, Max_Points, Grade_Date)
     VALUES (2, 1, 1, 'Quiz', 15, 20, '2006-10-20');
-    
+
     -- Grade 3: Invalid (would violate CHECK constraint if attempted)
     -- SAVEPOINT grade3;
     -- This would fail: INSERT INTO Grade VALUES (..., 25, 20, ...); -- grade > max
     -- ROLLBACK TO SAVEPOINT grade3;
-    
+
     -- Grade 4: Valid
     SAVEPOINT grade4;
     INSERT INTO Grade (Student_ID, Course_ID, Department_ID, Grade_Type, Grade_Value, Max_Points, Grade_Date)
@@ -797,7 +797,7 @@ BEGIN
         CURRENT_TIMESTAMP,  -- Current timestamp
         'A statement-level DML operation occurred on Students table.'
     );
-    
+
     -- Statement-level triggers must return NULL
     RETURN NULL;
 END;
