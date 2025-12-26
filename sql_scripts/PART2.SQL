@@ -1,23 +1,24 @@
 
 CREATE TABLE Activity (
-    -- Partial Key
-    Activity_Type VARCHAR(20) NOT NULL CHECK (Activity_Type IN ('Lecture', 'Tutorial', 'Practical')),
+    -- Partial Key (Discriminator)
+    Activity_Type VARCHAR(20) NOT NULL
+        CHECK (Activity_Type IN ('Lecture', 'Tutorial', 'Practical')),
 
-    -- Foreign Key to owner entity (Course) - part of primary key
+    -- Foreign Key to Owner Entity (Course)
     Course_ID INTEGER NOT NULL,
     Department_ID INTEGER NOT NULL,
 
+    -- Activity Attributes
     Hours_Per_Week NUMERIC(3,1) NOT NULL CHECK (Hours_Per_Week > 0),
 
-    -- Constraints
-    -- Primary Key: Combination of owner's key + discriminator (weak entity pattern)
+    -- Primary Key: Owner's Key + Discriminator
     CONSTRAINT PK_Activity PRIMARY KEY (Course_ID, Department_ID, Activity_Type),
 
-    -- Foreign Key: Activity MUST belong to a course (total participation)
+    -- Foreign Key with CASCADE
     CONSTRAINT FK_Activity_Course FOREIGN KEY (Course_ID, Department_ID)
         REFERENCES Course (Course_ID, Department_ID)
         ON UPDATE CASCADE
-        ON DELETE CASCADE  -- If course is deleted, its activities are deleted (weak entity)
+        ON DELETE CASCADE
 );
 
  -- Add comments for documentation
@@ -102,18 +103,15 @@ CREATE TABLE Exam_Schedule (
 );
 
 CREATE TABLE Student_Exam (
-    -- Primary Key
-    Participation_ID SERIAL PRIMARY KEY,
 
-    -- Foreign Keys
     Student_ID INTEGER NOT NULL,
 
-    -- COMPOSITE KEY for the Weak Entity "Exam"
-    Exam_ID INTEGER NOT NULL,
     Course_ID INTEGER NOT NULL,
     Department_ID INTEGER NOT NULL,
+    Exam_ID INTEGER NOT NULL,
 
-    -- Link to the specific sitting
+    -- 2. ATTRIBUTES
+    -- Schedule is now just a mandatory attribute (where/when they sit it)
     Schedule_ID INTEGER NOT NULL,
 
     -- Participation tracking
@@ -122,98 +120,85 @@ CREATE TABLE Student_Exam (
     Seat_Number VARCHAR(10),
     Special_Accommodations TEXT,
 
-    -- Constraints
+    -- 3. PRIMARY KEY DEFINITION
+    CONSTRAINT PK_Student_Exam PRIMARY KEY (Student_ID, Course_ID, Department_ID, Exam_ID),
+
+    -- 4. FOREIGN KEYS
     CONSTRAINT FK_StudentExam_Student FOREIGN KEY (Student_ID)
         REFERENCES Student (Student_ID)
         ON UPDATE CASCADE ON DELETE RESTRICT,
 
-   -- FOREIGN KEY
     CONSTRAINT FK_StudentExam_Exam FOREIGN KEY (Course_ID, Department_ID, Exam_ID)
         REFERENCES Exam (Course_ID, Department_ID, Exam_ID)
         ON UPDATE CASCADE ON DELETE RESTRICT,
 
     CONSTRAINT FK_StudentExam_Schedule FOREIGN KEY (Schedule_ID)
         REFERENCES Exam_Schedule (Schedule_ID)
-        ON UPDATE CASCADE ON DELETE RESTRICT,
-
-    -- Logical Constraint: A student cannot take the same exam twice
-    CONSTRAINT UN_StudentExam UNIQUE (Student_ID, Course_ID, Department_ID, Exam_ID)
+        ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
-COMMENT ON TABLE Student_Exam IS 'Tracks student exam registration and attendance. Linked via composite keys to the weak Exam entity.';
+COMMENT ON TABLE Student_Exam IS ' (N:M) linking Students and Exams. PK is composite of Student and Exam keys.';
 
 -- the previous Grade and Reservation should be dropped and recreated as follows:
 
 CREATE TABLE Grade (
-    -- Primary Key
+    -- 1. SIMPLIFIED PRIMARY KEY
+    Grade_ID SERIAL PRIMARY KEY,
+
+    -- 2. FOREIGN KEYS (Who and What)
     Student_ID INTEGER NOT NULL,
     Course_ID INTEGER NOT NULL,
     Department_ID INTEGER NOT NULL,
+
+    -- 3. EXAM LINKS (Nullable)
+    -- We removed Participation_ID because it no longer exists in the other table.
+    -- We just need to know which Exam this grade belongs to.
+    Exam_ID INTEGER,
+
+    -- 4. DATA ATTRIBUTES
     Grade_Type VARCHAR(30) NOT NULL,
     Grade_Date DATE NOT NULL DEFAULT CURRENT_DATE,
-
-
-    Grade_Source VARCHAR(10) NOT NULL DEFAULT 'Other'
-        CHECK (Grade_Source IN ('Exam', 'Other')),
-
-    -- Foreign Keys for Exam-specific records (Nullable for non-exam work)
-    Exam_ID INTEGER,         -- Weak Entity "Exam"
-    Participation_ID INTEGER,  -- Links to the specific Student_Exam record
-
-    -- Grade attributes
+    Grade_Source VARCHAR(10) NOT NULL DEFAULT 'Other' CHECK (Grade_Source IN ('Exam', 'Other')),
     Grade_Value NUMERIC(5,2) NOT NULL,
     Max_Points NUMERIC(5,2) NOT NULL,
     Comments VARCHAR(500),
 
-    -- 1. PRIMARY KEY DEFINITION
-    CONSTRAINT PK_Grade PRIMARY KEY (Student_ID, Course_ID, Department_ID, Grade_Type, Grade_Date),
-
-    -- 2. DOMAIN CONSTRAINTS
+    -- 5. CONSTRAINTS
     CONSTRAINT CK_Grade_Value CHECK (Grade_Value >= 0 AND Grade_Value <= Max_Points),
     CONSTRAINT CK_Max_Points CHECK (Max_Points > 0),
-    CONSTRAINT CK_Grade_Type CHECK (Grade_Type IN (
-        'Quiz', 'Midterm', 'Final', 'Assignment', 'Project', 'Practical', 'Participation', 'Homework'
-    )),
+    CONSTRAINT CK_Grade_Type CHECK (Grade_Type IN ('Quiz', 'Midterm', 'Final', 'Assignment', 'Project', 'Practical Test', 'Homework', 'Oral Exam', 'Resit')),
 
-    -- 3. CONDITIONAL INTEGRITY (The Exam-Source Logic)
-    -- This ensures that if it is an 'Exam', we MUST have the exam IDs.
-    -- If it is 'Other', those IDs MUST be NULL to maintain 3NF/BCNF integrity.
+    -- Logic: If it is an Exam, we must have the Exam_ID.
     CONSTRAINT CK_Grade_Exam_Required CHECK (
-        (Grade_Source = 'Exam' AND Exam_ID IS NOT NULL AND Participation_ID IS NOT NULL)
+        (Grade_Source = 'Exam' AND Exam_ID IS NOT NULL)
         OR
-        (Grade_Source = 'Other' AND Exam_ID IS NULL AND Participation_ID IS NULL)
+        (Grade_Source = 'Other' AND Exam_ID IS NULL)
     ),
 
-    -- 4. FOREIGN KEY CONSTRAINTS
+    -- 6. LOGICAL UNIQUENESS (The "Real" Key)
+    -- This prevents a student from having two grades of the same type (e.g., two Final Exams)
+    -- for the same course on the same day, even though we are using Grade_ID.
+    CONSTRAINT UN_Student_Grade UNIQUE (Student_ID, Course_ID, Department_ID, Grade_Type, Grade_Date),
+
+    -- 7. FOREIGN KEY REFERENCES
     CONSTRAINT FK_Grade_Student FOREIGN KEY (Student_ID)
         REFERENCES Student (Student_ID)
-        ON UPDATE CASCADE
-        ON DELETE RESTRICT,
+        ON UPDATE CASCADE ON DELETE RESTRICT,
 
-    -- Link to the identifying Course (Strong reference to parent)
     CONSTRAINT FK_Grade_Course FOREIGN KEY (Course_ID, Department_ID)
         REFERENCES Course (Course_ID, Department_ID)
-        ON UPDATE CASCADE
-        ON DELETE RESTRICT,
+        ON UPDATE CASCADE ON DELETE RESTRICT,
 
     CONSTRAINT FK_Grade_Exam FOREIGN KEY (Course_ID, Department_ID, Exam_ID)
         REFERENCES Exam (Course_ID, Department_ID, Exam_ID)
-        ON UPDATE CASCADE
-        ON DELETE RESTRICT,
-
-    CONSTRAINT FK_Grade_Participation FOREIGN KEY (Participation_ID)
-        REFERENCES Student_Exam (Participation_ID)
-        ON UPDATE CASCADE
-        ON DELETE RESTRICT
+        ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
--- Documentation
-COMMENT ON TABLE Grade IS 'Stores all student marks. Uses conditional constraints to link to specific Exams when applicable.';
-
+COMMENT ON TABLE Grade IS 'Stores student marks. Uses Grade_ID for simplicity but enforces uniqueness via constraint.';
 
 CREATE TABLE Reservation (
     -- Primary Key
-    Reservation_ID INTEGER PRIMARY KEY,
+    Reservation_ID SERIAL PRIMARY KEY,
 
     -- Foreign Keys to the Room
     Building VARCHAR(1) NOT NULL,
@@ -239,6 +224,7 @@ CREATE TABLE Reservation (
     CONSTRAINT CK_Reservation_Hours CHECK (Hours_Number >= 1),
     CONSTRAINT CK_Reservation_Time CHECK (Start_Time < End_Time),
     CONSTRAINT CK_Activity_Type_Limit CHECK (Activity_Type IN ('Lecture', 'Tutorial', 'Practical')),
+    CONSTRAINT CK_Reservation_Hours_Sync CHECK (Hours_Number = EXTRACT(EPOCH FROM (End_Time - Start_Time)) / 3600),
 
     -- 2. FOREIGN KEY CONSTRAINTS
 
