@@ -1,5 +1,6 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QGridLayout, QPushButton, QStackedWidget, QLabel
 from ui.department_crud_view import DepartmentView
+from ui.student_crud_view import StudentView
 class CrudView(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -14,6 +15,9 @@ class CrudView(QWidget):
 
         self.dept_view = DepartmentView()
         self.stack.addWidget(self.dept_view)
+
+        self.student_view = StudentView()
+        self.stack.addWidget(self.student_view)
         
         self.stack.setCurrentIndex(0)
 
@@ -37,5 +41,7 @@ class CrudView(QWidget):
         print(f"Opening CRUD for {table_name}")
         if table_name == "Department":
             self.stack.setCurrentWidget(self.dept_view)
+        if table_name == "Student":
+            self.stack.setCurrentWidget(self.student_view)
 
     
