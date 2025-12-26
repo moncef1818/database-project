@@ -65,3 +65,72 @@ class DepartmentCRUD:
         finally:
             close_cursor(cursor)
             close_connection(connection)
+
+    @staticmethod
+    def update_department(department_id, name ):
+        connection = None
+        cursor = None
+
+        try:
+            connection = get_connection()
+            cursor = get_cursor(connection)
+
+            sql = "UPDATE department SET name = %s WHERE department_id = %s;"
+            cursor.execute(sql , (name, department_id))
+            rows_affected = cursor.rowcount
+
+            connection.commit()
+
+            if rows_affected > 0:
+                print(f"✅ Department ID {department_id} updated successfully")
+                return True
+            else:
+                print(f"⚠️ No department found with ID {department_id}")
+                return False
+        except Exception as e:
+            if connection:
+                connection.rollback()
+            print(f"❌ Error updating department: {e}")
+            return False
+        finally:
+            close_cursor(cursor)
+            close_connection(connection)
+
+
+
+    @staticmethod
+    def delete_department(dept_id):
+        """DELETE a department"""
+        connection = None
+        cursor = None
+        try:
+            connection = get_connection()
+            cursor = get_cursor(connection)
+            
+            sql = "DELETE FROM department WHERE department_id = %s"
+            
+            cursor.execute(sql, (dept_id,))
+            rows_affected = cursor.rowcount
+            
+            connection.commit()
+            
+            if rows_affected > 0:
+                print(f"✅ Department {dept_id} deleted successfully")
+                return True
+            else:
+                print(f"⚠️ No department found with ID {dept_id}")
+                return False
+                
+        except Exception as e:
+            if connection:
+                connection.rollback()
+            print(f"❌ Error deleting department: {e}")
+            
+            # Check if it's a foreign key constraint error
+            if 'foreign key' in str(e).lower() or 'violates' in str(e).lower():
+                print("⚠️ Cannot delete: Department is being used by other records")
+            
+            return False
+        finally:
+            close_cursor(cursor)
+            close_connection(connection)
