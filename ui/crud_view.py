@@ -8,10 +8,11 @@ from PyQt5.QtWidgets import (
 )
 
 from ui.department_crud_view import DepartmentView
-from ui.instructor_crud_view import InstructorView  # type: ignore
+from ui.instructor_crud_view import InstructorView  
 from ui.room_crud_view import RoomView
 from ui.student_crud_view import StudentView
-
+from ui.section_crud_view import SectionView  
+from ui.group_crud_view import GroupView
 
 class CrudView(QWidget):
     def __init__(self, parent=None):
@@ -37,6 +38,12 @@ class CrudView(QWidget):
         self.instructor_view = InstructorView()
         self.stack.addWidget(self.instructor_view)
 
+        self.section_view = SectionView()
+        self.stack.addWidget(self.section_view)
+
+        self.group_view = GroupView()
+        self.stack.addWidget(self.group_view)
+
         self.stack.setCurrentIndex(0)
 
     def setup_menu_page(self):
@@ -45,8 +52,11 @@ class CrudView(QWidget):
         tables = [
             ("Department", 0, 0),
             ("Student", 0, 1),
-            ("Instructor", 1, 0),
-            ("Room", 1, 1),
+            ("Instructor", 0, 2),
+            ("Room", 1, 0),
+            ("Section", 1, 1),
+            ("Group", 1, 2),
+
         ]
 
         for name, row, col in tables:
@@ -57,11 +67,17 @@ class CrudView(QWidget):
 
     def open_crud(self, table_name):
         print(f"Opening CRUD for {table_name}")
-        if table_name == "Department":
-            self.stack.setCurrentWidget(self.dept_view)
-        if table_name == "Student":
-            self.stack.setCurrentWidget(self.student_view)
-        if table_name == "Room":
-            self.stack.setCurrentWidget(self.room_view)
-        if table_name == "Instructor":
-            self.stack.setCurrentWidget(self.instructor_view)
+        match table_name:
+            case "Department":
+                self.stack.setCurrentWidget(self.dept_view)
+            case "Student":
+                self.stack.setCurrentWidget(self.student_view)
+            case "Room":
+                self.stack.setCurrentWidget(self.room_view)
+            case "Instructor":
+                self.stack.setCurrentWidget(self.instructor_view)
+            case "Section":
+                self.stack.setCurrentWidget(self.section_view)
+            case "Group":
+                self.stack.setCurrentWidget(self.group_view)
+        
