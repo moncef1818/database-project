@@ -2,34 +2,27 @@ import os
 import sys
 from pathlib import Path
 
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QFont, QIcon, QPixmap
 from PyQt5.QtWidgets import (
     QApplication,
-    QMainWindow,
-    QLabel,
-    QWidget,
-    QVBoxLayout,
-    QHBoxLayout,
-    QGridLayout,
-    QPushButton,
-    QCheckBox,
-    QRadioButton,
     QButtonGroup,
-)
-from PyQt5.QtGui import QIcon, QFont, QPixmap
-from PyQt5.QtCore import Qt
-
-from PyQt5.QtWidgets import (
-    QMainWindow,
-    QWidget,
-    QHBoxLayout,
-    QVBoxLayout,
+    QCheckBox,
     QFrame,
+    QGridLayout,
+    QHBoxLayout,
+    QLabel,
+    QMainWindow,
     QPushButton,
+    QRadioButton,
     QStackedWidget,
+    QVBoxLayout,
+    QWidget,
 )
+
 from db import connection
 from ui import crud_view
-from ui.results_processing_view import (
+from ui.report_analytics_view import (
     ResultsProcessingView,
 )  # New import for results sub-menu
 
@@ -58,9 +51,7 @@ class MainWindow(QMainWindow):
         self.btn_crud = QPushButton("Core Data Management")
         self.btn_staff_scheduling = QPushButton("Staff & Scheduling")
         self.btn_accadimic = QPushButton("Academic Records")
-        self.btn_resaults_processing = QPushButton(
-            "Results Processing"
-        )  # Already there, no change
+        self.btn_resaults_processing = QPushButton("Results Processing")
         self.btn_reports = QPushButton("Reports & Analytics")
         self.btn_audit = QPushButton("System Audit")
 
@@ -89,9 +80,9 @@ class MainWindow(QMainWindow):
 
         # Connect signals
         self.btn_crud.clicked.connect(self.show_crud_menu)
-        self.btn_resaults_processing.clicked.connect(
-            self.show_results_processing
-        )  
+        self.btn_reports.clicked.connect(
+            self.show_reports_analytics
+        )  # Changed to link Reports & Analytics button to submenu
 
     def init_UI(self):
         pass
@@ -101,11 +92,11 @@ class MainWindow(QMainWindow):
         self.content_stack.addWidget(crud_view_instance)
         self.content_stack.setCurrentWidget(crud_view_instance)
 
-    # New method for Results Processing sub-menu
-    def show_results_processing(self):
-        results_view_instance = ResultsProcessingView()
-        self.content_stack.addWidget(results_view_instance)
-        self.content_stack.setCurrentWidget(results_view_instance)
+    # New method for Reports & Analytics sub-menu (renamed for clarity)
+    def show_reports_analytics(self):
+        reports_view_instance = ResultsProcessingView()
+        self.content_stack.addWidget(reports_view_instance)
+        self.content_stack.setCurrentWidget(reports_view_instance)
 
 
 def main():

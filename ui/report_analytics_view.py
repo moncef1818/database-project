@@ -156,7 +156,7 @@ class ResultsProcessingView(QWidget):
         layout = QVBoxLayout(menu)
 
         # Title
-        title = QLabel("Results Processing")
+        title = QLabel("Report analytics ")
         title.setStyleSheet("font-size: 18px; font-weight: bold;")
         title.setAlignment(Qt.AlignCenter)
         layout.addWidget(title)
