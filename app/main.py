@@ -2,20 +2,40 @@ import os
 import sys
 from pathlib import Path
 
-
-from PyQt5.QtWidgets import (QApplication, QMainWindow , QLabel, QWidget ,
-                            QVBoxLayout , QHBoxLayout, QGridLayout , QPushButton,
-                            QCheckBox , QRadioButton ,QButtonGroup)
-from PyQt5.QtGui import QIcon , QFont , QPixmap
+from PyQt5.QtWidgets import (
+    QApplication,
+    QMainWindow,
+    QLabel,
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QGridLayout,
+    QPushButton,
+    QCheckBox,
+    QRadioButton,
+    QButtonGroup,
+)
+from PyQt5.QtGui import QIcon, QFont, QPixmap
 from PyQt5.QtCore import Qt
 
-from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QFrame, QPushButton, QStackedWidget
+from PyQt5.QtWidgets import (
+    QMainWindow,
+    QWidget,
+    QHBoxLayout,
+    QVBoxLayout,
+    QFrame,
+    QPushButton,
+    QStackedWidget,
+)
 from db import connection
 from ui import crud_view
-
+from ui.results_processing_view import (
+    ResultsProcessingView,
+)  # New import for results sub-menu
 
 BASE_DIR = Path(__file__).parent.resolve()
 IMG_PATH = os.path.join(BASE_DIR, "image.png")
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -34,18 +54,26 @@ class MainWindow(QMainWindow):
         self.sidebar.setFixedWidth(200)
         self.sidebar.setStyleSheet("background-color: #1e86fc;")
         sidebar_layout = QVBoxLayout(self.sidebar)
-        
+
         self.btn_crud = QPushButton("Core Data Management")
         self.btn_staff_scheduling = QPushButton("Staff & Scheduling")
         self.btn_accadimic = QPushButton("Academic Records")
-        self.btn_resaults_processing = QPushButton("Results Processing")
+        self.btn_resaults_processing = QPushButton(
+            "Results Processing"
+        )  # Already there, no change
         self.btn_reports = QPushButton("Reports & Analytics")
         self.btn_audit = QPushButton("System Audit")
-        
-        
-        for btn in [self.btn_crud, self.btn_staff_scheduling, self.btn_accadimic, self.btn_resaults_processing, self.btn_reports, self.btn_audit]:
+
+        for btn in [
+            self.btn_crud,
+            self.btn_staff_scheduling,
+            self.btn_accadimic,
+            self.btn_resaults_processing,
+            self.btn_reports,
+            self.btn_audit,
+        ]:
             sidebar_layout.addWidget(btn)
-        sidebar_layout.addStretch() # Push buttons to top
+        sidebar_layout.addStretch()  # Push buttons to top
 
         # 2. Content Area (Stacked Widget)
         self.content_stack = QStackedWidget()
@@ -54,14 +82,16 @@ class MainWindow(QMainWindow):
         label2.setPixmap(pixmap)
         label2.setScaledContents(True)
         self.content_stack.addWidget(label2)
-        
+
         # 3. Add layouts to main
         main_layout.addWidget(self.sidebar)
         main_layout.addWidget(self.content_stack)
 
         # Connect signals
         self.btn_crud.clicked.connect(self.show_crud_menu)
-
+        self.btn_resaults_processing.clicked.connect(
+            self.show_results_processing
+        )  
 
     def init_UI(self):
         pass
@@ -70,12 +100,20 @@ class MainWindow(QMainWindow):
         crud_view_instance = crud_view.CrudView()
         self.content_stack.addWidget(crud_view_instance)
         self.content_stack.setCurrentWidget(crud_view_instance)
-        
+
+    # New method for Results Processing sub-menu
+    def show_results_processing(self):
+        results_view_instance = ResultsProcessingView()
+        self.content_stack.addWidget(results_view_instance)
+        self.content_stack.setCurrentWidget(results_view_instance)
+
+
 def main():
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
     sys.exit(app.exec_())
+
 
 if __name__ == "__main__":
     main()

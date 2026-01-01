@@ -8,9 +8,6 @@ CREATE TABLE Department (
     CONSTRAINT UN_Department_Name UNIQUE (name)
 );
 
-
-
-
 CREATE TABLE Section (
     Section_ID SERIAL PRIMARY KEY,
     Name VARCHAR(50) NOT NULL

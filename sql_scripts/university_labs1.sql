@@ -63,8 +63,8 @@ CREATE TABLE Student (
 -- Table 3: Course
 -- Purpose: Stores course information linked to departments
 CREATE TABLE Course (
-    Course_ID int4 NOT NULL,
-    Department_ID int4 NOT NULL,
+    Course_ID int NOT NULL,
+    Department_ID int NOT NULL,
     name varchar(60) NOT NULL,
     Description varchar(1000),
 
@@ -78,7 +78,7 @@ CREATE TABLE Course (
 -- Table 4: Instructor
 -- Purpose: Stores faculty member information
 CREATE TABLE Instructor (
-    Instructor_ID integer,
+    Instructor_ID integer ,
     Department_ID integer NOT NULL,
     Last_Name varchar(25) NOT NULL,
     First_Name varchar(25) NOT NULL,
@@ -109,7 +109,7 @@ CREATE TABLE Room (
 -- Table 6: Reservation
 -- Purpose: Stores room booking information for courses
 CREATE TABLE Reservation (
-    Reservation_ID integer,
+    Reservation_ID integer=,
     Building varchar(1) NOT NULL,
     RoomNo varchar(10) NOT NULL,
     Course_ID integer NOT NULL,
