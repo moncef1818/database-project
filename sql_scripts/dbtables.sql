@@ -1,6 +1,6 @@
 -- Final University DB Schema
 -- Notes: EERD Mapping - Option 2 (Super table + subtype tables with FK).
--
+
 
 CREATE TABLE Department (
     Department_id SERIAL PRIMARY KEY,
@@ -177,9 +177,7 @@ CREATE TABLE Student_Practical_Attendance (
         REFERENCES Practical (Activity_ID) ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
--- =====================================================================
--- SECTION 6: ENROLLMENT & EXAMS
--- =====================================================================
+
 
 CREATE TABLE Enrollment (
     Enrollment_ID SERIAL PRIMARY KEY,
@@ -317,3 +315,67 @@ CREATE TABLE Reservation (
         ON UPDATE CASCADE ON DELETE RESTRICT,
     CONSTRAINT UN_Room_Schedule UNIQUE (Building, RoomNo, Reserv_Date, Start_Time)
 );
+
+CREATE OR REPLACE FUNCTION check_student_enrollment()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Check if student is enrolled in the course for the grade's semester
+    IF NOT EXISTS (
+        SELECT 1
+        FROM Enrollment e
+        WHERE e.Student_ID = NEW.Student_ID
+          AND e.Course_ID = NEW.Course_ID
+          AND e.Department_ID = NEW.Department_ID
+          AND e.Semester_ID = NEW.Semester_ID
+          AND e.Status IN ('Enrolled', 'Passed', 'Failed', 'Resit Eligible')
+    ) THEN
+        RAISE EXCEPTION
+            'Cannot insert grade: Student % is not enrolled in Course % (Department %) for Semester %',
+            NEW.Student_ID, NEW.Course_ID, NEW.Department_ID, NEW.Semester_ID
+        USING HINT = 'Student must be enrolled in the course before receiving grades';
+    END IF;
+
+    -- If enrollment exists, allow the insert
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_check_enrollment_before_grade
+BEFORE INSERT ON Grade
+FOR EACH ROW
+EXECUTE FUNCTION check_student_enrollment();
+
+COMMENT ON FUNCTION check_student_enrollment() IS
+'Validates that a student is enrolled in a course before allowing grade insertion';
+
+COMMENT ON TRIGGER trigger_check_enrollment_before_grade ON Grade IS
+'Prevents grade insertion if student is not enrolled in the course for the specified semester';
+
+
+
+CREATE OR REPLACE FUNCTION create_mandatory_lecture()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_activity_id INTEGER;
+BEGIN
+    -- Create the Activity record with type 'Lecture'
+    INSERT INTO Activity (Course_ID, Department_ID, Activity_Type)
+    VALUES (NEW.Course_ID, NEW.Department_ID, 'Lecture')
+    RETURNING Activity_ID INTO v_activity_id;
+
+    -- Create the Lecture subtype record
+    INSERT INTO Lecture (Activity_ID)
+    VALUES (v_activity_id);
+
+    -- Log the creation
+    RAISE NOTICE 'Mandatory Lecture activity (ID: %) automatically created for Course % in Department %',
+        v_activity_id, NEW.Course_ID, NEW.Department_ID;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_create_mandatory_lecture
+AFTER INSERT ON Course
+FOR EACH ROW
+EXECUTE FUNCTION create_mandatory_lecture();

@@ -2,8 +2,10 @@ import os
 import sys
 from pathlib import Path
 
+from db import connection
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QIcon, QPixmap
+
 from PyQt5.QtWidgets import (
     QApplication,
     QButtonGroup,
@@ -19,12 +21,13 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-
-from db import connection
 from ui import crud_view
+from ui.academic_records_view import (
+    AcademicRecordsView,
+)
 from ui.report_analytics_view import (
     ResultsProcessingView,
-)  # New import for results sub-menu
+)
 
 BASE_DIR = Path(__file__).parent.resolve()
 IMG_PATH = os.path.join(BASE_DIR, "image.png")
@@ -64,7 +67,7 @@ class MainWindow(QMainWindow):
             self.btn_audit,
         ]:
             sidebar_layout.addWidget(btn)
-        sidebar_layout.addStretch()  # Push buttons to top
+        sidebar_layout.addStretch()
 
         # 2. Content Area (Stacked Widget)
         self.content_stack = QStackedWidget()
@@ -80,9 +83,8 @@ class MainWindow(QMainWindow):
 
         # Connect signals
         self.btn_crud.clicked.connect(self.show_crud_menu)
-        self.btn_reports.clicked.connect(
-            self.show_reports_analytics
-        )  # Changed to link Reports & Analytics button to submenu
+        self.btn_reports.clicked.connect(self.show_reports_analytics)
+        self.btn_accadimic.clicked.connect(self.show_academic_records)
 
     def init_UI(self):
         pass
@@ -92,11 +94,15 @@ class MainWindow(QMainWindow):
         self.content_stack.addWidget(crud_view_instance)
         self.content_stack.setCurrentWidget(crud_view_instance)
 
-    # New method for Reports & Analytics sub-menu (renamed for clarity)
     def show_reports_analytics(self):
         reports_view_instance = ResultsProcessingView()
         self.content_stack.addWidget(reports_view_instance)
         self.content_stack.setCurrentWidget(reports_view_instance)
+
+    def show_academic_records(self):
+        academic_view_instance = AcademicRecordsView(self)
+        self.content_stack.addWidget(academic_view_instance)
+        self.content_stack.setCurrentWidget(academic_view_instance)
 
 
 def main():
