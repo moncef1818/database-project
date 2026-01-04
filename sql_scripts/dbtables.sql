@@ -146,13 +146,25 @@ CREATE TABLE Practical (
 );
 COMMENT ON TABLE Practical IS 'Practical specialization - optional laboratory work';
 
-
+CREATE TABLE Student_Lecture_Attendance (
+    Student_ID INTEGER NOT NULL,
+    Activity_ID INTEGER NOT NULL,
+    Attendance_Date DATE NOT NULL DEFAULT CURRENT_DATE, 
+    Attended BOOLEAN DEFAULT FALSE,
+    Attendance_Time TIME,
+    Special_Accommodations TEXT,
+    CONSTRAINT PK_Student_Lecture_Attendance PRIMARY KEY (Student_ID, Activity_ID, Attendance_Date),
+    CONSTRAINT FK_StudentLecture_Student FOREIGN KEY (Student_ID)
+        REFERENCES Student (Student_ID) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT FK_StudentLecture_Lecture FOREIGN KEY (Activity_ID)
+        REFERENCES Lecture (Activity_ID) ON UPDATE CASCADE ON DELETE RESTRICT
+);
 
 
 CREATE TABLE Student_Tutorial_Attendance (
     Student_ID INTEGER NOT NULL,
     Activity_ID INTEGER NOT NULL,
-    Attendance_Date DATE NOT NULL DEFAULT CURRENT_DATE, -
+    Attendance_Date DATE NOT NULL DEFAULT CURRENT_DATE,
     Attended BOOLEAN DEFAULT FALSE,
     Attendance_Time TIME,
     Special_Accommodations TEXT,
@@ -379,3 +391,130 @@ CREATE TRIGGER trigger_create_mandatory_lecture
 AFTER INSERT ON Course
 FOR EACH ROW
 EXECUTE FUNCTION create_mandatory_lecture();
+
+CREATE TABLE audit_log (
+	audit_id bigserial primary key,
+	table_name text not null,
+	operation_type text not null,
+	operation_time timestamp not null default current_timestamp,
+	username varchar(30) default current_user,
+	affected_rows integer not null default 0
+	
+)
+
+-- Function to log changes
+
+create or replace function audit_statement_change()
+returns trigger
+AS $$
+declare 
+	n integer := 0;
+begin
+	if TG_OP = 'INSERT' THEN
+		select count(*) into n from new_table;
+	elsif TG_OP = 'DELETE' THEN
+		select count(*) into n from old_table;
+	elsif TG_OP = 'UPDATE' THEN
+		select count(*) into n from new_table;
+	end if;
+
+	insert into audit_log(table_name, operation_type ,
+	operation_time , username , affected_rows )
+	values (TG_TABLE_NAME,TG_OP,current_timestamp,current_user,n);
+	
+	return NULL;
+end;
+$$ LANGUAGE plpgsql;
+
+-- setting triggers for grade audit
+
+
+create trigger trg_audit_grade_ins 
+after insert on grade
+
+referencing new table as new_table
+for each statement
+execute function audit_statement_change();
+
+create trigger trg_audit_grade_upd 
+after update on grade
+
+referencing new table as new_table  old table as old_table
+for each statement
+execute function audit_statement_change();
+
+create trigger trg_audit_grade_del
+after delete on grade
+
+referencing  old table as old_table
+for each statement
+execute function audit_statement_change();
+
+-- setting triggers for lecture attandance audit
+
+create trigger trg_audit_lecture_att_ins
+after insert on student_lecture_attendance
+
+referencing new table as new_table
+for each statement
+execute function audit_statement_change();
+
+create trigger trg_audit_lecture_att_upd
+after update on student_lecture_attendance
+
+referencing new table as new_table  old table as old_table
+for each statement
+execute function audit_statement_change();
+
+create trigger trg_audit_lecture_att_del
+after delete on student_lecture_attendance
+
+referencing  old table as old_table
+for each statement
+execute function audit_statement_change();
+
+-- setting triggers for tutorial attandance audit
+
+create trigger trg_audit_tutorial_att_ins
+after insert on student_tutorial_attendance
+
+referencing new table as new_table 
+for each statement
+execute function audit_statement_change();
+
+create trigger trg_audit_tutorial_att_upd
+after update on student_tutorial_attendance
+
+referencing new table as new_table  old table as old_table
+for each statement
+execute function audit_statement_change();
+
+create trigger trg_audit_tutorial_att_del
+after delete on student_tutorial_attendance
+
+referencing   old table as old_table
+for each statement
+execute function audit_statement_change();
+
+-- setting triggers for practical attandance audit
+
+create trigger trg_practical_lecture_att_ins
+after insert on student_practical_attendance
+
+referencing new table as new_table  
+for each statement
+execute function audit_statement_change();
+
+create trigger trg_practical_lecture_att_upd
+after update on student_practical_attendance
+
+referencing new table as new_table  old table as old_table
+for each statement
+execute function audit_statement_change();
+
+create trigger trg_practical_lecture_att_del
+after delete on student_practical_attendance
+
+referencing   old table as old_table
+for each statement
+execute function audit_statement_change();
