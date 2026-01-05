@@ -28,6 +28,7 @@ from ui.report_analytics_view import (
     Report_analytics,
 )
 from ui.results_processing_view import ResultsProcessingView
+from ui.audit_log_view import AuditLogView
 
 BASE_DIR = Path(__file__).parent.resolve()
 IMG_PATH = os.path.join(BASE_DIR, "image.png")
@@ -85,6 +86,7 @@ class MainWindow(QMainWindow):
         self.btn_crud.clicked.connect(self.show_crud_menu)
         self.btn_reports.clicked.connect(self.show_reports_analytics)
         self.btn_accadimic.clicked.connect(self.show_academic_records)
+        self.btn_audit.clicked.connect(self.show_audit_records)
         self.btn_resaults_processing.clicked.connect(self.show_results_processing)
 
     def init_UI(self):
@@ -104,6 +106,12 @@ class MainWindow(QMainWindow):
         academic_view_instance = AcademicRecordsView(self)
         self.content_stack.addWidget(academic_view_instance)
         self.content_stack.setCurrentWidget(academic_view_instance)
+
+
+    def show_audit_records(self):
+        audit_view_instance = AuditLogView(self)
+        self.content_stack.addWidget(audit_view_instance)
+        self.content_stack.setCurrentWidget(audit_view_instance)
 
     def show_results_processing(self):
 
