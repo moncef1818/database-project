@@ -1,5 +1,4 @@
 # db/attendance_queries.py
-# Purpose: CRUD operations for Attendance tables (Lecture, Tutorial, Practical)
 
 from db.connection import close_connection, close_cursor, get_connection, get_cursor
 
@@ -27,8 +26,6 @@ class AttendanceQueries:
             special_accommodations: Text describing any accommodations
             activity_type: Type of activity ("Lecture", "Tutorial", or "Practical")
 
-        Returns:
-            bool: True if successful, False otherwise
         """
         connection = None
         cursor = None

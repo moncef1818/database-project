@@ -1,5 +1,4 @@
-# ui/attendance_crud_view.py
-# Purpose: Complete CRUD operations for Attendance management
+# Complete CRUD operations for Attendance management
 
 from db.attendance_queries import AttendanceQueries
 from db.grade_queries import GradeQueries
@@ -28,11 +27,7 @@ from PyQt5.QtWidgets import (
 
 class AttendanceCrudView(QWidget):
     def __init__(self, parent=None):
-        """
-        Initializes Attendance CRUD view with menu and operation pages.
-        Args:
-            parent: AcademicRecordsView reference
-        """
+
         super().__init__(parent)
         # Stores (student_id, activity_id, attendance_date, activity_type) for operations
         self.selected_attendance = None
@@ -62,11 +57,7 @@ class AttendanceCrudView(QWidget):
         self.stack.setCurrentIndex(0)
 
     def setup_menu_page(self):
-        """
-        Creates the CRUD operations menu.
-        Returns:
-            QWidget: Menu page with action buttons
-        """
+
         page = QWidget()
         layout = QVBoxLayout(page)
 
@@ -121,11 +112,7 @@ class AttendanceCrudView(QWidget):
         return page
 
     def open_action(self, action_name):
-        """
-        Routes to appropriate CRUD operation.
-        Args:
-            action_name: String identifying the action
-        """
+
         if action_name == "Add Attendance":
             self.load_create_combos()
             self.clear_create_form()
@@ -144,11 +131,7 @@ class AttendanceCrudView(QWidget):
             self.stack.setCurrentIndex(4)
 
     def setup_create_page(self):
-        """
-        Creates the form page for adding new attendance records.
-        Returns:
-            QWidget: Create form page
-        """
+
         page = QWidget()
         layout = QVBoxLayout(page)
 
@@ -233,7 +216,6 @@ class AttendanceCrudView(QWidget):
         self.accommodations_text.clear()
 
     def load_create_combos(self):
-        """Populates dropdowns for create form from database."""
         # Load students
         students = GradeQueries.get_students()
         self.student_combo.clear()
@@ -247,7 +229,6 @@ class AttendanceCrudView(QWidget):
             self.activity_combo.addItem(name, activity_id)
 
     def submit_create(self):
-        """Validates form data and creates new attendance record."""
         # Get form values
         student_id = self.student_combo.currentData()
         activity_id = self.activity_combo.currentData()
@@ -296,11 +277,7 @@ class AttendanceCrudView(QWidget):
             )
 
     def setup_read_page(self):
-        """
-        Creates the view page for displaying attendance with filters.
-        Returns:
-            QWidget: Read page with table and filters
-        """
+
         page = QWidget()
         layout = QVBoxLayout(page)
 
@@ -439,28 +416,14 @@ class AttendanceCrudView(QWidget):
             )
 
     def calculate_attendance_percent(self, student_id, activity_id):
-        """
-        Calculates attendance percentage for student/activity.
-        Formula: (attended_count / total_count) * 100
 
-        Args:
-            student_id: Student ID
-            activity_id: Activity ID
-
-        Returns:
-            float: Attendance percentage (0-100)
-        """
         total, attended_count = AttendanceQueries.get_attendance_for_percent(
             student_id, activity_id
         )
         return (attended_count / total * 100) if total > 0 else 0.0
 
     def setup_update_page(self):
-        """
-        Creates the page for updating attendance records.
-        Returns:
-            QWidget: Update page with table and form
-        """
+
         page = QWidget()
         layout = QVBoxLayout(page)
 
@@ -556,11 +519,7 @@ class AttendanceCrudView(QWidget):
         return page
 
     def toggle_update_time_field(self, state):
-        """
-        Enables/disables time field in update form.
-        Args:
-            state: Checkbox state
-        """
+
         self.update_attendance_time.setEnabled(state == Qt.Checked)
 
     def load_update_combos(self):
@@ -690,7 +649,7 @@ class AttendanceCrudView(QWidget):
         self.update_form_widget.setVisible(True)
 
     def submit_update(self):
-        """Validates and submits updated attendance data."""
+
         if not self.selected_attendance:
             QMessageBox.warning(self, "Error", "No attendance record selected.")
             return
@@ -725,11 +684,7 @@ class AttendanceCrudView(QWidget):
             QMessageBox.critical(self, "Error", "Failed to update attendance.")
 
     def setup_delete_page(self):
-        """
-        Creates the page for deleting attendance records.
-        Returns:
-            QWidget: Delete confirmation page
-        """
+
         page = QWidget()
         layout = QVBoxLayout(page)
 
@@ -753,7 +708,7 @@ class AttendanceCrudView(QWidget):
         # Buttons
         btn_layout = QHBoxLayout()
 
-        btn_delete = QPushButton("🗑️ Delete Selected")
+        btn_delete = QPushButton(" Delete Selected")
         btn_delete.setStyleSheet("background-color: #e74c3c; color: white; padding: 8px;")
         btn_delete.clicked.connect(self.confirm_delete)
         btn_layout.addWidget(btn_delete)
