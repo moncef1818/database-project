@@ -1,86 +1,9 @@
-# =====================================================================
-# results_queries.py
-# Purpose: Database interaction layer for executing SQL functions
-# =====================================================================
-
-from db.connection import close_connection, close_cursor, get_connection, get_cursor
-
-
-class ResultsQueries:
-    """
-    Handles all database queries for the Results Processing module.
-    Uses stored PostgreSQL functions to fetch data.
-    """
-
-    @staticmethod
-    def execute_function(function_name, params=()):
-        """
-        Executes a PostgreSQL function and returns results with column names.
-
-        Args:
-            function_name (str): Name of the SQL function to execute (e.g., 'get_student_by_group')
-            params (tuple): Parameters to pass to the function (e.g., (1, 2) for course_id and department_id)
-
-        Returns:
-            tuple: (results, columns) where:
-                - results: List of tuples containing row data
-                - columns: List of column names from the query result
-
-        Example:
-            results, columns = execute_function('get_student_by_group', (1,))
-            # Returns: ([(1, 'Benali', 'Yacine', 'email@...', 'Groupe 01')], ['student_id', 'last_name', ...])
-        """
-        connection = None
-        cursor = None
-        try:
-            # Establish database connection
-            connection = get_connection()
-            cursor = get_cursor(connection)
-
-            # Build SQL query with placeholders for parameters
-            # Example: "SELECT * FROM get_student_by_group(%s);"
-            placeholders = ", ".join("%s" for _ in params)
-            sql = f"SELECT * FROM {function_name}({placeholders});"
-
-            # Execute the query with parameters (psycopg2 handles SQL injection prevention)
-            cursor.execute(sql, params)
-
-            # Fetch all results from the query
-            results = cursor.fetchall()
-
-            # Extract column names from cursor metadata
-            columns = [desc[0] for desc in cursor.description]  # type: ignore
-
-            # Log success for debugging
-            print(f"✅ Executed {function_name}, retrieved {len(results)} rows")
-            return results, columns
-
-        except Exception as e:
-            # Log error and return empty results (graceful failure)
-            print(f"❌ Error executing {function_name}: {e}")
-            return [], []
-
-        finally:
-            # Always close database resources to prevent connection leaks
-            close_cursor(cursor)
-            close_connection(connection)
-
-
-# =====================================================================
-# results_processing_view.py
-# Purpose: PyQt5 UI for Results Processing with dynamic forms and tables
-# Architecture: Stacked widget design (Menu ↔ Results screen)
-# =====================================================================
-
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
-    QComboBox,
     QFormLayout,
     QGridLayout,
-    QHBoxLayout,
     QHeaderView,
     QLabel,
-    QLineEdit,
     QMessageBox,
     QPushButton,
     QSpinBox,
@@ -94,36 +17,17 @@ from PyQt5.QtWidgets import (
 from db import results_queries  # Import the database query class
 
 
-class ResultsProcessingView(QWidget):
-    """
-    Main view for Results Processing sub-menu.
+class Report_analytics(QWidget):
 
-    Features:
-    - Menu with 10 query buttons (a-j)
-    - Dynamic parameter form based on selected query
-    - Results table with automatic column sizing
-    - Navigation between menu and results screens
-    """
 
     def __init__(self, parent=None):
-        """
-        Initializes the Results Processing view.
 
-        Args:
-            parent: Parent widget (usually the main window) for back navigation
-        """
         super().__init__(parent)
         self.current_query = None  # Tracks which query is active (a-j)
         self.initUI()
 
     def initUI(self):
-        """
-        Sets up the main UI structure with stacked widgets.
 
-        Structure:
-        - Stack Index 0: Operations menu (grid of query buttons)
-        - Stack Index 1: Results screen (params form + table)
-        """
         main_layout = QVBoxLayout(self)
 
         # Stacked widget allows switching between menu and results
@@ -141,17 +45,7 @@ class ResultsProcessingView(QWidget):
         self.stack.setCurrentIndex(0)
 
     def create_operations_menu(self):
-        """
-        Builds the main menu with a grid of query buttons.
 
-        Layout:
-        - Title: "Results Processing"
-        - 5x2 grid of operation buttons (a-j)
-        - Back button to main menu
-
-        Returns:
-            QWidget: The complete menu widget
-        """
         menu = QWidget()
         layout = QVBoxLayout(menu)
 
@@ -223,13 +117,11 @@ class ResultsProcessingView(QWidget):
         - Results table (auto-populated from DB)
         - Back to Menu button
 
-        Returns:
-            QWidget: The complete results screen widget
-        """
+            """
         screen = QWidget()
         layout = QVBoxLayout(screen)
 
-        # Dynamic title (changes per query)
+        # Dynamic title
         self.result_title = QLabel("Query Results")
         self.result_title.setStyleSheet("font-size: 16px; font-weight: bold;")
         layout.addWidget(self.result_title)
@@ -289,24 +181,7 @@ class ResultsProcessingView(QWidget):
         return screen
 
     def show_result(self, query_name):
-        """
-        Prepares the results screen for a specific query.
 
-        This method:
-        1. Extracts query identifier (a-j) from button name
-        2. Clears previous parameter form
-        3. Clears previous table results (IMPORTANT!)
-        4. Adds only relevant parameters for selected query
-        5. Switches to results screen
-
-        Args:
-            query_name (str): Button text (e.g., "a) Students by Group")
-
-        Example:
-            show_result("a) Students by Group")
-            -> Sets current_query = "a"
-            -> Adds only "Group ID (optional)" input field
-        """
         # Extract query identifier (first letter: a-j)
         self.current_query = query_name.lower()[0]
         self.result_title.setText(query_name)
@@ -317,7 +192,6 @@ class ResultsProcessingView(QWidget):
         self.result_table.clear()  # Clear any remaining data
 
         # Clear parameter form safely
-        # IMPORTANT: Use setParent(None) instead of deleteLater() to avoid Qt deletion errors
         while self.param_form.count():
             child = self.param_form.takeAt(0)
             if child.widget():
@@ -361,7 +235,6 @@ class ResultsProcessingView(QWidget):
             self.param_form.addRow("Department ID:", self.department_id_input)
 
         # Query i: get_students_resit_eligible(course_id, department_id)
-        # FIXED: Removed semester_id (not needed in SQL function)
         elif self.current_query == "i":
             self.param_form.addRow("Course ID:", self.course_id_input)
             self.param_form.addRow("Department ID:", self.department_id_input)
@@ -375,20 +248,7 @@ class ResultsProcessingView(QWidget):
         self.stack.setCurrentIndex(1)
 
     def run_query(self):
-        """
-        Executes the selected query with user-provided parameters.
 
-        Process:
-        1. Map query identifier (a-j) to SQL function name
-        2. Collect parameter values from input widgets
-        3. Call database function via ResultsQueries.execute_function()
-        4. Populate results table with returned data
-        5. Reset input fields for next query
-
-        Error Handling:
-        - Shows error dialog if query is invalid
-        - Shows info dialog if no results found
-        """
         # Map query identifiers to SQL function names
         function_map = {
             "a": "get_student_by_group",
@@ -457,7 +317,6 @@ class ResultsProcessingView(QWidget):
         self.result_table.setRowCount(len(results))
         self.result_table.setHorizontalHeaderLabels(columns)
 
-        # Fill table cells
         for row_idx, row in enumerate(results):
             for col_idx, value in enumerate(row):
                 # Convert None to empty string for display

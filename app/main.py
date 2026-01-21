@@ -28,8 +28,9 @@ from ui.academic_records_view import (
     AcademicRecordsView,
 )
 from ui.report_analytics_view import (
-    ResultsProcessingView,
+    Report_analytics,
 )
+from ui.results_processing_view import ResultsProcessingView
 from ui.audit_log_view import AuditLogView
 from ui.reservation_view import ReservationView
 
@@ -118,7 +119,7 @@ class MainWindow(QMainWindow):
         self.content_stack.setCurrentWidget(reservation_view_instance)
 
     def show_reports_analytics(self):
-        reports_view_instance = ResultsProcessingView()
+        reports_view_instance = Report_analytics()
         self.content_stack.addWidget(reports_view_instance)
         self.content_stack.setCurrentWidget(reports_view_instance)
 

@@ -1,6 +1,3 @@
-# ui/academic_records_view.py
-# Purpose: Main menu for Academic Records operations (Grades and Attendance)
-
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
     QGridLayout,
@@ -17,14 +14,8 @@ from ui.grade_crud_view import GradeCrudView
 
 class AcademicRecordsView(QWidget):
     def __init__(self, parent=None):
-        """
-        Initializes the Academic Records view with proper stacking.
-        Args:
-            parent: MainWindow reference for navigation
-        """
-        super().__init__(parent)
 
-        # Main layout setup
+        super().__init__(parent)
         self.main_layout = QVBoxLayout(self)
 
         # Title
@@ -33,30 +24,26 @@ class AcademicRecordsView(QWidget):
         title.setAlignment(Qt.AlignCenter)
         self.main_layout.addWidget(title)
 
-        # Stacked widget for menu and CRUD views
+
         self.stack = QStackedWidget()
         self.main_layout.addWidget(self.stack)
 
-        # Menu page (index 0)
+
         self.menu_page = self.create_menu_page()
         self.stack.addWidget(self.menu_page)
 
-        # Initialize with menu
+
         self.stack.setCurrentIndex(0)
 
     def create_menu_page(self):
-        """
-        Creates the main menu page with buttons for Grades and Attendance.
-        Returns:
-            QWidget: Configured menu page
-        """
+
         menu_widget = QWidget()
         layout = QVBoxLayout(menu_widget)
 
-        # Button grid
+
         grid = QGridLayout()
 
-        # Grades button
+
         btn_grades = QPushButton("📊 Manage Grades")
         btn_grades.setFixedSize(200, 80)
         btn_grades.setStyleSheet(
@@ -80,8 +67,8 @@ class AcademicRecordsView(QWidget):
         btn_grades.clicked.connect(self.show_grades_crud)
         grid.addWidget(btn_grades, 0, 0)
 
-        # Attendance button
-        btn_attendance = QPushButton("📅 Manage Attendance")
+
+        btn_attendance = QPushButton("Manage Attendance")
         btn_attendance.setFixedSize(200, 80)
         btn_attendance.setStyleSheet(
             """
@@ -107,7 +94,7 @@ class AcademicRecordsView(QWidget):
         layout.addLayout(grid)
         layout.addStretch()
 
-        # Back button
+
         btn_back = QPushButton("← Back to Main Menu")
         btn_back.setStyleSheet(
             """
@@ -128,18 +115,13 @@ class AcademicRecordsView(QWidget):
         Displays the Grades CRUD view.
         Creates new instance if needed and switches to it.
         """
-        # Create grades CRUD view with self as parent
         grades_crud = GradeCrudView(parent=self)
 
-        # Add to stack (index 1)
         self.stack.addWidget(grades_crud)
         self.stack.setCurrentWidget(grades_crud)
 
     def show_attendance_crud(self):
-        """
-        Displays the Attendance CRUD view.
-        Creates new instance if needed and switches to it.
-        """
+
         # Create attendance CRUD view with self as parent
         attendance_crud = AttendanceCrudView(parent=self)
 
@@ -152,19 +134,14 @@ class AcademicRecordsView(QWidget):
         Returns to the main application menu.
         Navigates through parent hierarchy to find main window.
         """
-        # Find the main window's content stack
         main_window = self.window()  # Gets top-level window
         if hasattr(main_window, "content_stack"):
             main_window.content_stack.setCurrentIndex(0)
         else:
-            # Fallback: just show menu page
             self.stack.setCurrentIndex(0)
 
     def show_menu(self):
-        """
-        Returns to the academic records menu.
-        Called from child CRUD views when going back.
-        """
+
         # Remove all CRUD views from stack (keep only menu)
         while self.stack.count() > 1:
             widget = self.stack.widget(1)

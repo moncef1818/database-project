@@ -1,18 +1,22 @@
 from PyQt5.QtWidgets import (
     QGridLayout,
-    QLabel,
     QPushButton,
     QStackedWidget,
     QVBoxLayout,
     QWidget,
 )
 
+from ui.activity_crud_view import ActivityView
+from ui.course_crud_view import CourseView
 from ui.department_crud_view import DepartmentView
-from ui.instructor_crud_view import InstructorView  
-from ui.room_crud_view import RoomView
-from ui.student_crud_view import StudentView
-from ui.section_crud_view import SectionView  
 from ui.group_crud_view import GroupView
+from ui.instructor_crud_view import InstructorView
+from ui.room_crud_view import RoomView
+from ui.section_crud_view import SectionView
+from ui.semester_crud_view import SemesterView
+from ui.student_crud_view import StudentView
+from ui.enrollment_crud_view import EnrollmentView
+
 
 class CrudView(QWidget):
     def __init__(self, parent=None):
@@ -44,6 +48,18 @@ class CrudView(QWidget):
         self.group_view = GroupView()
         self.stack.addWidget(self.group_view)
 
+        self.course_view = CourseView()
+        self.stack.addWidget(self.course_view)
+
+        self.semester_view = SemesterView()
+        self.stack.addWidget(self.semester_view)
+
+        self.activity_view = ActivityView()
+        self.stack.addWidget(self.activity_view)
+
+        self.enrollment_view = EnrollmentView()  # Added
+        self.stack.addWidget(self.enrollment_view)
+
         self.stack.setCurrentIndex(0)
 
     def setup_menu_page(self):
@@ -56,7 +72,10 @@ class CrudView(QWidget):
             ("Room", 1, 0),
             ("Section", 1, 1),
             ("Group", 1, 2),
-
+            ("Course", 2, 0),
+            ("Semester", 2, 1),
+            ("Activity", 2, 2),
+            ("Enrollment", 3, 0),  # Added to row 3, col 0
         ]
 
         for name, row, col in tables:
@@ -80,4 +99,11 @@ class CrudView(QWidget):
                 self.stack.setCurrentWidget(self.section_view)
             case "Group":
                 self.stack.setCurrentWidget(self.group_view)
-        
+            case "Course":
+                self.stack.setCurrentWidget(self.course_view)
+            case "Semester":
+                self.stack.setCurrentWidget(self.semester_view)
+            case "Activity":
+                self.stack.setCurrentWidget(self.activity_view)
+            case "Enrollment":
+                self.stack.setCurrentWidget(self.enrollment_view)
