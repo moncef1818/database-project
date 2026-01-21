@@ -86,18 +86,7 @@ class GradeCrudView(QWidget):
         for name, row, col, color in actions:
             btn = QPushButton(name)
             btn.setFixedSize(150, 100)
-            btn.setStyleSheet(f"""
-                QPushButton {{
-                    background-color: {color};
-                    color: white;
-                    font-size: 12px;
-                    font-weight: bold;
-                    border-radius: 8px;
-                }}
-                QPushButton:hover {{
-                    opacity: 0.8;
-                }}
-            """)
+            
             btn.clicked.connect(lambda checked, n=name: self.open_action(n))
             grid.addWidget(btn, row, col)
 

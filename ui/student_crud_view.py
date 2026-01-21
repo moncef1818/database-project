@@ -67,13 +67,7 @@ class StudentView(QWidget):
 
         for btn in [btn_create, btn_read, btn_update, btn_delete]:
             btn.setFixedSize(180, 120)
-            btn.setStyleSheet(
-                """
-                QPushButton { background-color: #3498db; color: white; font-size: 14px; border-radius: 8px; }
-                QPushButton:hover { background-color: #2980b9; }
-            """
-            )
-
+            
         grid.addWidget(btn_create, 0, 0)
         grid.addWidget(btn_read, 0, 1)
         grid.addWidget(btn_update, 1, 0)

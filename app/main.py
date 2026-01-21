@@ -100,6 +100,7 @@ class MainWindow(QMainWindow):
         self.btn_staff_scheduling.clicked.connect(self.show_staff_scheduling)  # ← ADD THIS
         self.btn_reports.clicked.connect(self.show_reports_analytics)
         self.btn_accadimic.clicked.connect(self.show_academic_records)
+        self.btn_resaults_processing.clicked.connect(self.show_results_processing)
         self.btn_audit.clicked.connect(self.show_audit_records)
 
 
@@ -136,10 +137,16 @@ class MainWindow(QMainWindow):
         self.content_stack.addWidget(audit_view_instance)
         self.content_stack.setCurrentWidget(audit_view_instance)
 
+    def show_results_processing(self):
+        results_processing_view_instance = ResultsProcessingView(self)
+        self.content_stack.addWidget(results_processing_view_instance)
+        self.content_stack.setCurrentWidget(results_processing_view_instance)        
 
 
 def main():
     app = QApplication(sys.argv)
+    with open('modern_theme.qss', 'r', encoding='utf-8') as f:
+        app.setStyleSheet(f.read())
     window = MainWindow()
     window.show()
     sys.exit(app.exec_())

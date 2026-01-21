@@ -74,20 +74,7 @@ class AdminActionsView(QWidget):
         for name, row, col, color, action_type in actions:
             btn = QPushButton(name)
             btn.setFixedSize(180, 100)
-            btn.setStyleSheet(
-                f"""
-                QPushButton {{
-                    background-color: {color};
-                    color: white;
-                    font-size: 13px;
-                    font-weight: bold;
-                    border-radius: 8px;
-                }}
-                QPushButton:hover {{
-                    opacity: 0.9;
-                }}
-            """
-            )
+        
             btn.clicked.connect(lambda checked, t=action_type: self.show_action(t))
             grid.addWidget(btn, row, col)
 

@@ -78,20 +78,7 @@ class StudentStatusReportsView(QWidget):
         for name, row, col, color, report_type in reports:
             btn = QPushButton(name)
             btn.setFixedSize(180, 100)
-            btn.setStyleSheet(
-                f"""
-                QPushButton {{
-                    background-color: {color};
-                    color: white;
-                    font-size: 13px;
-                    font-weight: bold;
-                    border-radius: 8px;
-                }}
-                QPushButton:hover {{
-                    opacity: 0.9;
-                }}
-            """
-            )
+            
             btn.clicked.connect(lambda checked, t=report_type: self.show_report(t))
             grid.addWidget(btn, row, col)
 
@@ -101,14 +88,7 @@ class StudentStatusReportsView(QWidget):
 
         # Back button
         btn_back = QPushButton("← Back to Results Menu")
-        btn_back.setStyleSheet(
-            """
-            background-color: #34495e;
-            color: white;
-            padding: 10px;
-            border-radius: 5px;
-        """
-        )
+        
         btn_back.clicked.connect(self.go_back_to_results_menu)
         layout.addWidget(btn_back)
 

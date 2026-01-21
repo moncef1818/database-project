@@ -76,19 +76,7 @@ class Report_analytics(QWidget):
         for name, row, col in buttons:
             btn = QPushButton(name)
             btn.setFixedSize(250, 80)  # Fixed size for uniform grid
-            btn.setStyleSheet(
-                """
-                QPushButton {
-                    background-color: #3498db;
-                    color: white;
-                    font-size: 12px;
-                    border-radius: 8px;
-                }
-                QPushButton:hover {
-                    background-color: #2980b9;
-                }
-            """
-            )
+            
             # Lambda captures button name to pass to show_result()
             btn.clicked.connect(lambda checked, n=name: self.show_result(n))
             grid.addWidget(btn, row, col)

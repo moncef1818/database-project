@@ -62,24 +62,7 @@ class ResultsProcessingView(QWidget):
         for name, row, col, color in categories:
             btn = QPushButton(name)
             btn.setFixedSize(200, 120)
-            btn.setStyleSheet(
-                f"""
-                QPushButton {{
-                    background-color: {color};
-                    color: white;
-                    font-size: 14px;
-                    font-weight: bold;
-                    border-radius: 10px;
-                    border: none;
-                }}
-                QPushButton:hover {{
-                    background-color: {self.darken_color(color)};
-                }}
-                QPushButton:pressed {{
-                    background-color: {self.darken_color(color, 0.3)};
-                }}
-            """
-            )
+            
             btn.clicked.connect(lambda checked, n=name: self.open_category(n))
             grid.addWidget(btn, row, col)
 
