@@ -114,7 +114,6 @@ class MainWindow(QMainWindow):
         self.content_stack.setCurrentWidget(audit_view_instance)
 
     def show_results_processing(self):
-
         results_view = ResultsProcessingView(parent=self)
         self.content_stack.addWidget(results_view)
         self.content_stack.setCurrentWidget(results_view)
