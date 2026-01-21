@@ -2,9 +2,11 @@ import os
 import sys
 from pathlib import Path
 
+
 from db import connection
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QIcon, QPixmap
+
 
 from PyQt5.QtWidgets import (
     QApplication,
@@ -29,9 +31,12 @@ from ui.report_analytics_view import (
     ResultsProcessingView,
 )
 from ui.audit_log_view import AuditLogView
+from ui.reservation_view import ReservationView
+
 
 BASE_DIR = Path(__file__).parent.resolve()
 IMG_PATH = os.path.join(BASE_DIR, "image.png")
+
 
 
 class MainWindow(QMainWindow):
@@ -41,10 +46,12 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Student App")
         self.resize(1100, 700)
 
+
         # Central Widget & Main Layout
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         main_layout = QHBoxLayout(central_widget)
+
 
         # 1. Sidebar
         self.sidebar = QFrame()
@@ -52,12 +59,14 @@ class MainWindow(QMainWindow):
         self.sidebar.setStyleSheet("background-color: #1e86fc;")
         sidebar_layout = QVBoxLayout(self.sidebar)
 
+
         self.btn_crud = QPushButton("Core Data Management")
         self.btn_staff_scheduling = QPushButton("Staff & Scheduling")
         self.btn_accadimic = QPushButton("Academic Records")
         self.btn_resaults_processing = QPushButton("Results Processing")
         self.btn_reports = QPushButton("Reports & Analytics")
         self.btn_audit = QPushButton("System Audit")
+
 
         for btn in [
             self.btn_crud,
@@ -70,6 +79,7 @@ class MainWindow(QMainWindow):
             sidebar_layout.addWidget(btn)
         sidebar_layout.addStretch()
 
+
         # 2. Content Area (Stacked Widget)
         self.content_stack = QStackedWidget()
         label2 = QLabel(self)
@@ -78,33 +88,46 @@ class MainWindow(QMainWindow):
         label2.setScaledContents(True)
         self.content_stack.addWidget(label2)
 
+
         # 3. Add layouts to main
         main_layout.addWidget(self.sidebar)
         main_layout.addWidget(self.content_stack)
 
+
         # Connect signals
         self.btn_crud.clicked.connect(self.show_crud_menu)
+        self.btn_staff_scheduling.clicked.connect(self.show_staff_scheduling)  # ← ADD THIS
         self.btn_reports.clicked.connect(self.show_reports_analytics)
         self.btn_accadimic.clicked.connect(self.show_academic_records)
         self.btn_audit.clicked.connect(self.show_audit_records)
 
+
     def init_UI(self):
         pass
+
 
     def show_crud_menu(self):
         crud_view_instance = crud_view.CrudView()
         self.content_stack.addWidget(crud_view_instance)
         self.content_stack.setCurrentWidget(crud_view_instance)
 
+    # ← ADD THIS METHOD
+    def show_staff_scheduling(self):
+        reservation_view_instance = ReservationView(self)
+        self.content_stack.addWidget(reservation_view_instance)
+        self.content_stack.setCurrentWidget(reservation_view_instance)
+
     def show_reports_analytics(self):
         reports_view_instance = ResultsProcessingView()
         self.content_stack.addWidget(reports_view_instance)
         self.content_stack.setCurrentWidget(reports_view_instance)
 
+
     def show_academic_records(self):
         academic_view_instance = AcademicRecordsView(self)
         self.content_stack.addWidget(academic_view_instance)
         self.content_stack.setCurrentWidget(academic_view_instance)
+
 
 
     def show_audit_records(self):
@@ -113,11 +136,13 @@ class MainWindow(QMainWindow):
         self.content_stack.setCurrentWidget(audit_view_instance)
 
 
+
 def main():
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
     sys.exit(app.exec_())
+
 
 
 if __name__ == "__main__":
