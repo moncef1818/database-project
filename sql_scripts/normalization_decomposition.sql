@@ -24,6 +24,4 @@ ALTER TABLE Instructor
     FOREIGN KEY (Dept_Name) REFERENCES Department_Registry (Dept_Name)
     ON UPDATE CASCADE
     ON DELETE SET NULL;
--- ============================================================================
 
--- END OF SCRIPT

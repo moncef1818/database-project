@@ -14,22 +14,17 @@ ALTER TABLE Course ADD CONSTRAINT PK_Course PRIMARY KEY (Course_ID);
 -- Remove the orphaned column
 ALTER TABLE Course DROP COLUMN IF EXISTS Department_ID;
 
--- 3. ENHANCE INSTRUCTOR (DENORMALIZATION)
 ALTER TABLE Instructor
     ADD COLUMN IF NOT EXISTS Dept_Name varchar(25),
     ADD COLUMN IF NOT EXISTS Dept_Building varchar(1),
     ADD COLUMN IF NOT EXISTS Dept_Budget numeric(15, 2);
 
--- Remove the link to the table we are about to delete
 ALTER TABLE Instructor DROP COLUMN IF EXISTS Department_ID;
 
--- 4. FIX OTHER TABLES
--- These tables no longer need Department_ID to identify a Course
 ALTER TABLE Reservation DROP COLUMN IF EXISTS Department_ID;
 ALTER TABLE Enrollment DROP COLUMN IF EXISTS Department_ID;
 ALTER TABLE Grade DROP COLUMN IF EXISTS Department_ID;
 
--- Re-establish foreign keys to the new Course Primary Key
 ALTER TABLE Reservation ADD CONSTRAINT FK_Reservation_Course
     FOREIGN KEY (Course_ID) REFERENCES Course (Course_ID);
 ALTER TABLE Enrollment ADD CONSTRAINT FK_Enrollment_Course
@@ -37,5 +32,4 @@ ALTER TABLE Enrollment ADD CONSTRAINT FK_Enrollment_Course
 ALTER TABLE Grade ADD CONSTRAINT FK_Grade_Course
     FOREIGN KEY (Course_ID) REFERENCES Course (Course_ID);
 
--- 5. DELETE THE ENTITY
 DROP TABLE IF EXISTS Department;

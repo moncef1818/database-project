@@ -1,10 +1,10 @@
 import psycopg2
 
-DATABASE = "university"
+DATABASE = "University"
 USER = "postgres"
-PASSWORD = "moncefmoussa"
+PASSWORD = "moussa03kh"
 HOST = "localhost"
-PORT = "5433"
+PORT = "5432"
 
 
 def get_connection():

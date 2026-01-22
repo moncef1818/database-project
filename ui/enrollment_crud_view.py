@@ -1,4 +1,5 @@
-# New file: ui/enrollment_crud_view.py
+# Cleaned file: ui/enrollment_crud_view.py
+# NO UPDATE OPERATION - Only Create, Read, Delete
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
     QComboBox,
@@ -10,7 +11,6 @@ from PyQt5.QtWidgets import (
     QLineEdit,
     QMessageBox,
     QPushButton,
-    QSpinBox,
     QStackedWidget,
     QTableWidget,
     QTableWidgetItem,
@@ -31,6 +31,8 @@ class EnrollmentView(QWidget):
 
         self.stack = QStackedWidget()
         main_layout.addWidget(self.stack)
+
+        # Only 3 screens: Menu, Create, Read, Delete
         self.operations_menu = self.create_operations_menu()
         self.stack.addWidget(self.operations_menu)
 
@@ -39,9 +41,6 @@ class EnrollmentView(QWidget):
 
         self.read_screen = self.create_read_screen()
         self.stack.addWidget(self.read_screen)
-
-        self.update_screen = self.create_update_screen()
-        self.stack.addWidget(self.update_screen)
 
         self.delete_screen = self.create_delete_screen()
         self.stack.addWidget(self.delete_screen)
@@ -57,30 +56,42 @@ class EnrollmentView(QWidget):
         title.setAlignment(Qt.AlignCenter)
         layout.addWidget(title)
 
+        info = QLabel(
+            "⚠️ Note: Enrollments cannot be updated. To change, delete and create new."
+        )
+        info.setWordWrap(True)
+        info.setStyleSheet(
+            "color: #e67e22; padding: 10px; background: #fef5e7; border-radius: 5px; margin: 10px;"
+        )
+        layout.addWidget(info)
+
         grid = QGridLayout()
 
-        btn_create = QPushButton("Create New\nEnrollment")
-        btn_read = QPushButton("View All\nEnrollments")
-        btn_update = QPushButton("Update\nEnrollment")
-        btn_delete = QPushButton("Delete\nEnrollment")
-        btn_back = QPushButton("← Back to Core Data")
+        btn_create = QPushButton("📝 Create New\nEnrollment")
+        btn_read = QPushButton("👁️ View All\nEnrollments")
+        btn_delete = QPushButton("🗑️ Delete\nEnrollment")
 
-        for btn in [btn_create, btn_read, btn_update, btn_delete]:
-            btn.setFixedSize(180, 120)
-            
+        for btn in [btn_create, btn_read, btn_delete]:
+            btn.setFixedSize(200, 120)
+            btn.setStyleSheet(
+                """
+                QPushButton {
+                    font-size: 14px;
+                    font-weight: bold;
+                    border-radius: 10px;
+                }
+            """
+            )
 
         grid.addWidget(btn_create, 0, 0)
         grid.addWidget(btn_read, 0, 1)
-        grid.addWidget(btn_update, 1, 0)
-        grid.addWidget(btn_delete, 1, 1)
+        grid.addWidget(btn_delete, 1, 0, 1, 2)  # Delete spans 2 columns
 
         layout.addLayout(grid)
         layout.addStretch()
-        layout.addWidget(btn_back)
 
-        btn_create.clicked.connect(lambda: self.stack.setCurrentIndex(1))
+        btn_create.clicked.connect(self.show_create_screen)
         btn_read.clicked.connect(self.show_read_screen)
-        btn_update.clicked.connect(self.show_update_screen)
         btn_delete.clicked.connect(self.show_delete_screen)
 
         return menu
@@ -95,38 +106,32 @@ class EnrollmentView(QWidget):
 
         form = QFormLayout()
 
-        self.create_student_id_input = QSpinBox()
-        self.create_student_id_input.setMinimum(1)
-        self.create_student_id_input.setMaximum(999999)
-
-        self.create_course_id_input = QSpinBox()
-        self.create_course_id_input.setMinimum(1)
-        self.create_course_id_input.setMaximum(999999)
-
-        self.create_department_id_input = QSpinBox()
-        self.create_department_id_input.setMinimum(1)
-        self.create_department_id_input.setMaximum(9999)
-
-        self.create_semester_id_input = QSpinBox()
-        self.create_semester_id_input.setMinimum(1)
-        self.create_semester_id_input.setMaximum(9999)
-
+        # Dropdowns
+        self.create_student_combo = QComboBox()
+        self.create_department_combo = QComboBox()
+        self.create_course_combo = QComboBox()
+        self.create_semester_combo = QComboBox()
         self.create_status_combo = QComboBox()
         self.create_status_combo.addItems(
             ["Enrolled", "Passed", "Failed", "Excluded", "Resit Eligible"]
         )
 
-        form.addRow("Student ID:*", self.create_student_id_input)
-        form.addRow("Course ID:*", self.create_course_id_input)
-        form.addRow("Department ID:*", self.create_department_id_input)
-        form.addRow("Semester ID:*", self.create_semester_id_input)
+        # Connect department change to update courses
+        self.create_department_combo.currentIndexChanged.connect(
+            self.load_courses_for_create
+        )
+
+        form.addRow("Student:*", self.create_student_combo)
+        form.addRow("Department:*", self.create_department_combo)
+        form.addRow("Course:*", self.create_course_combo)
+        form.addRow("Semester:*", self.create_semester_combo)
         form.addRow("Status:", self.create_status_combo)
 
         layout.addLayout(form)
 
         btn_layout = QHBoxLayout()
-        btn_save = QPushButton("Save Enrollment")
-        btn_cancel = QPushButton("Cancel")
+        btn_save = QPushButton("💾 Save Enrollment")
+        btn_cancel = QPushButton("❌ Cancel")
 
         btn_save.setStyleSheet(
             "background-color: #27ae60; color: white; padding: 10px;"
@@ -157,9 +162,15 @@ class EnrollmentView(QWidget):
         search_label = QLabel("Search by:")
         self.search_field_combo = QComboBox()
         self.search_field_combo.addItems(
-            ["ID", "Student ID", "Course ID", "Department ID", "Semester ID", "Status"]
+            [
+                "ID",
+                "Student ID",
+                "Student Name",
+                "Course Name",
+                "Department Name",
+                "Status",
+            ]
         )
-        self.search_field_combo.setFixedWidth(120)
 
         search_input_label = QLabel("Enter:")
         self.search_input = QLineEdit()
@@ -171,16 +182,16 @@ class EnrollmentView(QWidget):
             [
                 "ID (Asc)",
                 "ID (Desc)",
-                "Student ID (Asc)",
-                "Student ID (Desc)",
-                "Course ID (Asc)",
-                "Course ID (Desc)",
+                "Student Name (A-Z)",
+                "Student Name (Z-A)",
+                "Course Name (A-Z)",
+                "Course Name (Z-A)",
                 "Status (A-Z)",
                 "Status (Z-A)",
             ]
         )
 
-        btn_search = QPushButton("Search")
+        btn_search = QPushButton("🔍 Search")
         btn_search.setStyleSheet(
             "background-color: #3498db; color: white; padding: 8px;"
         )
@@ -197,92 +208,31 @@ class EnrollmentView(QWidget):
         layout.addLayout(controls)
 
         self.read_table = QTableWidget()
-        self.read_table.setColumnCount(6)
+        self.read_table.setColumnCount(10)
         self.read_table.setHorizontalHeaderLabels(
-            ["ID", "Student ID", "Course ID", "Dept ID", "Semester ID", "Status"]
+            [
+                "ID",
+                "Student ID",
+                "Student Name",
+                "Course ID",
+                "Course Name",
+                "Dept ID",
+                "Department",
+                "Sem ID",
+                "Semester",
+                "Status",
+            ]
         )
         self.read_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.read_table.setSelectionBehavior(QTableWidget.SelectRows)
         layout.addWidget(self.read_table)
 
-        btn_back = QPushButton("Back to Menu")
+        btn_back = QPushButton("⬅️ Back to Menu")
         btn_back.setStyleSheet(
             "background-color: #34495e; color: white; padding: 10px;"
         )
         btn_back.clicked.connect(lambda: self.stack.setCurrentIndex(0))
         layout.addWidget(btn_back)
-
-        return screen
-
-    def create_update_screen(self):
-        screen = QWidget()
-        layout = QVBoxLayout(screen)
-
-        title = QLabel("Update Enrollment")
-        title.setStyleSheet("font-size: 16px; font-weight: bold;")
-        layout.addWidget(title)
-
-        self.update_table = QTableWidget()
-        self.update_table.setColumnCount(6)
-        self.update_table.setHorizontalHeaderLabels(
-            ["ID", "Student ID", "Course ID", "Dept ID", "Semester ID", "Status"]
-        )
-        self.update_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.update_table.setSelectionBehavior(QTableWidget.SelectRows)
-        self.update_table.clicked.connect(self.load_for_update)
-        layout.addWidget(self.update_table)
-
-        form = QFormLayout()
-
-        self.update_id_label = QLabel("Select an enrollment above")
-
-        self.update_student_id_input = QSpinBox()
-        self.update_student_id_input.setMinimum(1)
-        self.update_student_id_input.setMaximum(999999)
-
-        self.update_course_id_input = QSpinBox()
-        self.update_course_id_input.setMinimum(1)
-        self.update_course_id_input.setMaximum(999999)
-
-        self.update_department_id_input = QSpinBox()
-        self.update_department_id_input.setMinimum(1)
-        self.update_department_id_input.setMaximum(9999)
-
-        self.update_semester_id_input = QSpinBox()
-        self.update_semester_id_input.setMinimum(1)
-        self.update_semester_id_input.setMaximum(9999)
-
-        self.update_status_combo = QComboBox()
-        self.update_status_combo.addItems(
-            ["Enrolled", "Passed", "Failed", "Excluded", "Resit Eligible"]
-        )
-
-        form.addRow("ID:", self.update_id_label)
-        form.addRow("Student ID:*", self.update_student_id_input)
-        form.addRow("Course ID:*", self.update_course_id_input)
-        form.addRow("Department ID:*", self.update_department_id_input)
-        form.addRow("Semester ID:*", self.update_semester_id_input)
-        form.addRow("Status:", self.update_status_combo)
-
-        layout.addLayout(form)
-
-        btn_layout = QHBoxLayout()
-        btn_update = QPushButton("Update Enrollment")
-        btn_cancel = QPushButton("Cancel")
-
-        btn_update.setStyleSheet(
-            "background-color: #27ae60; color: white; padding: 10px;"
-        )
-        btn_cancel.setStyleSheet(
-            "background-color: #95a5a6; color: white; padding: 10px;"
-        )
-
-        btn_update.clicked.connect(self.update_enrollment)
-        btn_cancel.clicked.connect(lambda: self.stack.setCurrentIndex(0))
-
-        btn_layout.addWidget(btn_update)
-        btn_layout.addWidget(btn_cancel)
-        layout.addLayout(btn_layout)
 
         return screen
 
@@ -294,18 +244,38 @@ class EnrollmentView(QWidget):
         title.setStyleSheet("font-size: 16px; font-weight: bold;")
         layout.addWidget(title)
 
+        warning = QLabel(
+            "⚠️ Warning: Deleting an enrollment may also delete related grades and attendance records!"
+        )
+        warning.setWordWrap(True)
+        warning.setStyleSheet(
+            "color: #c0392b; padding: 10px; background: #fadbd8; border-radius: 5px;"
+        )
+        layout.addWidget(warning)
+
         self.delete_table = QTableWidget()
-        self.delete_table.setColumnCount(6)
+        self.delete_table.setColumnCount(10)
         self.delete_table.setHorizontalHeaderLabels(
-            ["ID", "Student ID", "Course ID", "Dept ID", "Semester ID", "Status"]
+            [
+                "ID",
+                "Student ID",
+                "Student Name",
+                "Course ID",
+                "Course Name",
+                "Dept ID",
+                "Department",
+                "Sem ID",
+                "Semester",
+                "Status",
+            ]
         )
         self.delete_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.delete_table.setSelectionBehavior(QTableWidget.SelectRows)
         layout.addWidget(self.delete_table)
 
         btn_layout = QHBoxLayout()
-        btn_delete = QPushButton("Delete Selected")
-        btn_cancel = QPushButton("Cancel")
+        btn_delete = QPushButton("🗑️ Delete Selected")
+        btn_cancel = QPushButton("⬅️ Cancel")
 
         btn_delete.setStyleSheet(
             "background-color: #e74c3c; color: white; padding: 10px;"
@@ -323,52 +293,136 @@ class EnrollmentView(QWidget):
 
         return screen
 
+    # ==================== HELPER FUNCTIONS ====================
+
+    def populate_table(self, table, results):
+        """Fill table with enrollment data"""
+        table.setRowCount(len(results))
+        for row_idx, enrollment in enumerate(results):
+            for col_idx in range(10):
+                value = (
+                    str(enrollment[col_idx]) if enrollment[col_idx] is not None else ""
+                )
+                table.setItem(row_idx, col_idx, QTableWidgetItem(value))
+
+    def load_dropdowns_for_create(self):
+        """Load all dropdowns for CREATE screen"""
+        # Students
+        students = enrollment_crud_queries.EnrollmentCRUD.get_students_for_dropdown()
+        self.create_student_combo.clear()
+        for student_id, name in students:
+            self.create_student_combo.addItem(f"{name} (ID: {student_id})", student_id)
+
+        # Departments
+        departments = (
+            enrollment_crud_queries.EnrollmentCRUD.get_departments_for_dropdown()
+        )
+        self.create_department_combo.clear()
+        for dept_id, name in departments:
+            self.create_department_combo.addItem(f"{name} (ID: {dept_id})", dept_id)
+
+        # Semesters
+        semesters = enrollment_crud_queries.EnrollmentCRUD.get_semesters_for_dropdown()
+        self.create_semester_combo.clear()
+        for sem_id, name in semesters:
+            self.create_semester_combo.addItem(f"{name} (ID: {sem_id})", sem_id)
+
+        # Courses (empty until department selected)
+        self.create_course_combo.clear()
+        self.create_course_combo.addItem("Select department first", None)
+
+    def load_courses_for_create(self):
+        """Update courses when department changes"""
+        dept_id = self.create_department_combo.currentData()
+        self.create_course_combo.clear()
+
+        if dept_id:
+            courses = enrollment_crud_queries.EnrollmentCRUD.get_courses_for_dropdown(
+                dept_id
+            )
+            for course_id, name, dept_id in courses:
+                self.create_course_combo.addItem(
+                    f"{name} (ID: {course_id})", (course_id, dept_id)
+                )
+        else:
+            self.create_course_combo.addItem("Select department first", None)
+
+    # ==================== SCREEN SHOW FUNCTIONS ====================
+
+    def show_create_screen(self):
+        """Load dropdowns and show CREATE screen"""
+        self.load_dropdowns_for_create()
+        self.stack.setCurrentIndex(1)
+
+    def show_read_screen(self):
+        """Refresh data and show READ screen"""
+        self.perform_search()
+        self.stack.setCurrentIndex(2)
+
+    def show_delete_screen(self):
+        """Refresh table and show DELETE screen"""
+        results = enrollment_crud_queries.EnrollmentCRUD.get_all_enrollments()
+        self.populate_table(self.delete_table, results)
+        self.stack.setCurrentIndex(3)
+
+    # ==================== CRUD OPERATIONS ====================
+
     def save_new_enrollment(self):
-        student_id = self.create_student_id_input.value()
-        course_id = self.create_course_id_input.value()
-        department_id = self.create_department_id_input.value()
-        semester_id = self.create_semester_id_input.value()
+        """Save new enrollment to database"""
+        student_id = self.create_student_combo.currentData()
+        course_data = self.create_course_combo.currentData()
+        department_id = self.create_department_combo.currentData()
+        semester_id = self.create_semester_combo.currentData()
         status = self.create_status_combo.currentText()
 
-        if not student_id or not course_id or not department_id or not semester_id:
-            QMessageBox.warning(self, "Validation Error", "All IDs are required!")
+        # Validation
+        if not student_id or not course_data or not department_id or not semester_id:
+            QMessageBox.warning(
+                self, "Validation Error", "Please fill all required fields!"
+            )
             return
 
+        # Extract course_id
+        course_id = course_data[0] if isinstance(course_data, tuple) else course_data
+
+        # Save to database
         success = enrollment_crud_queries.EnrollmentCRUD.create_enrollment(
             student_id, course_id, department_id, semester_id, status
         )
+
         if success:
-            QMessageBox.information(self, "Success", "Enrollment created successfully!")
+            QMessageBox.information(
+                self, "Success", "✅ Enrollment created successfully!"
+            )
             self.stack.setCurrentIndex(0)
         else:
             QMessageBox.critical(
                 self,
                 "Error",
-                "Failed to create enrollment—check FK or unique constraints.",
+                "❌ Failed to create enrollment. Check console for details.",
             )
 
     def perform_search(self):
+        """Search/filter/sort enrollments"""
         search_field = self.search_field_combo.currentText()
         search_value = self.search_input.text().strip()
 
-        sort_index = self.sort_combo.currentIndex()
-        if sort_index == 0:
-            sort_by, sort_order = "enrollment_id", "ASC"
-        elif sort_index == 1:
-            sort_by, sort_order = "enrollment_id", "DESC"
-        elif sort_index == 2:
-            sort_by, sort_order = "student_id", "ASC"
-        elif sort_index == 3:
-            sort_by, sort_order = "student_id", "DESC"
-        elif sort_index == 4:
-            sort_by, sort_order = "course_id", "ASC"
-        elif sort_index == 5:
-            sort_by, sort_order = "course_id", "DESC"
-        elif sort_index == 6:
-            sort_by, sort_order = "status", "ASC"
-        else:
-            sort_by, sort_order = "status", "DESC"
+        # Map sort dropdown to database columns
+        sort_mappings = {
+            0: ("enrollment_id", "ASC"),
+            1: ("enrollment_id", "DESC"),
+            2: ("student_name", "ASC"),
+            3: ("student_name", "DESC"),
+            4: ("course_name", "ASC"),
+            5: ("course_name", "DESC"),
+            6: ("status", "ASC"),
+            7: ("status", "DESC"),
+        }
+        sort_by, sort_order = sort_mappings.get(
+            self.sort_combo.currentIndex(), ("enrollment_id", "ASC")
+        )
 
+        # Get results
         results = enrollment_crud_queries.EnrollmentCRUD.get_all_enrollments(
             search_field=search_field if search_value else None,
             search_value=search_value if search_value else None,
@@ -376,72 +430,11 @@ class EnrollmentView(QWidget):
             sort_order=sort_order,
         )
 
-        self.read_table.setRowCount(len(results))
-        for row_idx, enrollment in enumerate(results):
-            self.read_table.setItem(row_idx, 0, QTableWidgetItem(str(enrollment[0])))
-            self.read_table.setItem(row_idx, 1, QTableWidgetItem(str(enrollment[1])))
-            self.read_table.setItem(row_idx, 2, QTableWidgetItem(str(enrollment[2])))
-            self.read_table.setItem(row_idx, 3, QTableWidgetItem(str(enrollment[3])))
-            self.read_table.setItem(row_idx, 4, QTableWidgetItem(str(enrollment[4])))
-            self.read_table.setItem(row_idx, 5, QTableWidgetItem(enrollment[5]))
-
-    def load_for_update(self):
-        selected = self.update_table.selectedIndexes()
-        if not selected:
-            return
-
-        row = selected[0].row()
-        enrollment_id = int(self.update_table.item(row, 0).text())
-        student_id = int(self.update_table.item(row, 1).text())
-        course_id = int(self.update_table.item(row, 2).text())
-        department_id = int(self.update_table.item(row, 3).text())
-        semester_id = int(self.update_table.item(row, 4).text())
-        status = self.update_table.item(row, 5).text()
-
-        self.current_enrollment_id = enrollment_id
-        self.update_id_label.setText(str(enrollment_id))
-        self.update_student_id_input.setValue(student_id)
-        self.update_course_id_input.setValue(course_id)
-        self.update_department_id_input.setValue(department_id)
-        self.update_semester_id_input.setValue(semester_id)
-        self.update_status_combo.setCurrentText(status)
-
-    def update_enrollment(self):
-        if not hasattr(self, "current_enrollment_id"):
-            QMessageBox.warning(
-                self, "No Selection", "Please select an enrollment first!"
-            )
-            return
-
-        student_id = self.update_student_id_input.value()
-        course_id = self.update_course_id_input.value()
-        department_id = self.update_department_id_input.value()
-        semester_id = self.update_semester_id_input.value()
-        status = self.update_status_combo.currentText()
-
-        if not student_id or not course_id or not department_id or not semester_id:
-            QMessageBox.warning(self, "Validation Error", "All IDs are required!")
-            return
-
-        success = enrollment_crud_queries.EnrollmentCRUD.update_enrollment(
-            self.current_enrollment_id,
-            student_id,
-            course_id,
-            department_id,
-            semester_id,
-            status,
-        )
-        if success:
-            QMessageBox.information(self, "Success", "Enrollment updated successfully!")
-            self.stack.setCurrentIndex(0)
-        else:
-            QMessageBox.critical(
-                self,
-                "Error",
-                "Failed to update enrollment—check FK or unique constraints.",
-            )
+        # Display
+        self.populate_table(self.read_table, results)
 
     def delete_enrollment(self):
+        """Delete selected enrollment"""
         selected = self.delete_table.selectedIndexes()
         if not selected:
             QMessageBox.warning(
@@ -451,13 +444,16 @@ class EnrollmentView(QWidget):
 
         row = selected[0].row()
         enrollment_id = int(self.delete_table.item(row, 0).text())
-        student_id = self.delete_table.item(row, 1).text()
-        course_id = self.delete_table.item(row, 2).text()
+        student_name = self.delete_table.item(row, 2).text()
+        course_name = self.delete_table.item(row, 4).text()
 
         reply = QMessageBox.question(
             self,
             "Confirm Delete",
-            f"Are you sure you want to delete Enrollment ID: {enrollment_id} (Student {student_id}, Course {course_id})?",
+            f"⚠️ Delete Enrollment ID {enrollment_id}?\n\n"
+            f"Student: {student_name}\n"
+            f"Course: {course_name}\n\n"
+            f"This may also delete related grades and attendance!",
             QMessageBox.Yes | QMessageBox.No,
         )
 
@@ -467,39 +463,9 @@ class EnrollmentView(QWidget):
             )
             if success:
                 QMessageBox.information(
-                    self, "Success", "Enrollment deleted successfully!"
+                    self, "Success", "✅ Enrollment deleted successfully!"
                 )
-                self.stack.setCurrentIndex(0)
+                # REFRESH TABLE IMMEDIATELY
+                self.show_delete_screen()
             else:
-                QMessageBox.critical(self, "Error", "Failed to delete enrollment!")
-
-    def show_read_screen(self):
-        self.perform_search()
-        self.stack.setCurrentIndex(2)
-
-    def show_update_screen(self):
-        results = enrollment_crud_queries.EnrollmentCRUD.get_all_enrollments()
-        self.update_table.setRowCount(len(results))
-        for row_idx, enrollment in enumerate(results):
-            self.update_table.setItem(row_idx, 0, QTableWidgetItem(str(enrollment[0])))
-            self.update_table.setItem(row_idx, 1, QTableWidgetItem(str(enrollment[1])))
-            self.update_table.setItem(row_idx, 2, QTableWidgetItem(str(enrollment[2])))
-            self.update_table.setItem(row_idx, 3, QTableWidgetItem(str(enrollment[3])))
-            self.update_table.setItem(row_idx, 4, QTableWidgetItem(str(enrollment[4])))
-            self.update_table.setItem(row_idx, 5, QTableWidgetItem(enrollment[5]))
-
-        self.update_id_label.setText("Select an enrollment above")
-        self.stack.setCurrentIndex(3)
-
-    def show_delete_screen(self):
-        results = enrollment_crud_queries.EnrollmentCRUD.get_all_enrollments()
-        self.delete_table.setRowCount(len(results))
-        for row_idx, enrollment in enumerate(results):
-            self.delete_table.setItem(row_idx, 0, QTableWidgetItem(str(enrollment[0])))
-            self.delete_table.setItem(row_idx, 1, QTableWidgetItem(str(enrollment[1])))
-            self.delete_table.setItem(row_idx, 2, QTableWidgetItem(str(enrollment[2])))
-            self.delete_table.setItem(row_idx, 3, QTableWidgetItem(str(enrollment[3])))
-            self.delete_table.setItem(row_idx, 4, QTableWidgetItem(str(enrollment[4])))
-            self.delete_table.setItem(row_idx, 5, QTableWidgetItem(enrollment[5]))
-
-        self.stack.setCurrentIndex(4)
+                QMessageBox.critical(self, "Error", "❌ Failed to delete enrollment!")

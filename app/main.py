@@ -2,156 +2,230 @@ import os
 import sys
 from pathlib import Path
 
-
-from db import connection
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont, QIcon, QPixmap
-
-
+from PyQt5.QtCore import QSize, Qt
+from PyQt5.QtGui import QColor, QFont, QIcon, QPixmap
 from PyQt5.QtWidgets import (
     QApplication,
-    QButtonGroup,
-    QCheckBox,
     QFrame,
-    QGridLayout,
+    QGraphicsDropShadowEffect,
     QHBoxLayout,
     QLabel,
     QMainWindow,
     QPushButton,
-    QRadioButton,
+    QSizePolicy,
+    QSpacerItem,
     QStackedWidget,
     QVBoxLayout,
     QWidget,
 )
-from ui import crud_view
-from ui.academic_records_view import (
-    AcademicRecordsView,
-)
-from ui.report_analytics_view import (
-    Report_analytics,
-)
-from ui.results_processing_view import ResultsProcessingView
-from ui.audit_log_view import AuditLogView
-from ui.reservation_view import ReservationView
 
+from db import connection
+
+# Import your views
+from ui import crud_view
+from ui.academic_records_view import AcademicRecordsView
+from ui.audit_log_view import AuditLogView
+from ui.report_analytics_view import Report_analytics
+from ui.reservation_view import ReservationView
+from ui.results_processing_view import ResultsProcessingView
 
 BASE_DIR = Path(__file__).parent.resolve()
-IMG_PATH = os.path.join(BASE_DIR, "image.png")
+LOGO_PATH = os.path.join(BASE_DIR, "image_9038d0.png")
 
+
+class SideButton(QPushButton):
+    """Sleek minimalist sidebar button"""
+
+    def __init__(self, text):
+        super().__init__(text)
+        self.setCheckable(True)
+        self.setCursor(Qt.PointingHandCursor)
+        self.setFixedHeight(50)
 
 
 class MainWindow(QMainWindow):
     def __init__(self):
-        self.connection = connection.get_connection()
         super().__init__()
-        self.setWindowTitle("Student App")
-        self.resize(1100, 700)
+        self.connection = connection.get_connection()
+        self.setWindowTitle("NSCS Command Center")
+        self.resize(1300, 850)
 
+        # 1. APPLY GLOBAL STYLES (Cyberpunk aesthetic)
+        self.apply_cyber_style()
 
-        # Central Widget & Main Layout
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         main_layout = QHBoxLayout(central_widget)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
 
-
-        # 1. Sidebar
+        # --- SIDEBAR (The Aesthetic Part) ---
         self.sidebar = QFrame()
-        self.sidebar.setFixedWidth(200)
-        self.sidebar.setStyleSheet("background-color: #1e86fc;")
+        self.sidebar.setObjectName("sidebar")
+        self.sidebar.setFixedWidth(280)
         sidebar_layout = QVBoxLayout(self.sidebar)
+        sidebar_layout.setContentsMargins(20, 30, 20, 30)
 
+        # Creative Logo Integration
+        self.logo_container = QFrame()
+        logo_layout = QVBoxLayout(self.logo_container)
 
-        self.btn_crud = QPushButton("Core Data Management")
-        self.btn_staff_scheduling = QPushButton("Staff & Scheduling")
-        self.btn_accadimic = QPushButton("Academic Records")
-        self.btn_resaults_processing = QPushButton("Results Processing")
-        self.btn_reports = QPushButton("Reports & Analytics")
-        self.btn_audit = QPushButton("System Audit")
+        self.logo_label = QLabel()
+        pixmap = QPixmap(LOGO_PATH)
+        self.logo_label.setPixmap(
+            pixmap.scaled(180, 180, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        )
+        self.logo_label.setAlignment(Qt.AlignCenter)
 
+        # Neon Glow Effect for Logo
+        logo_glow = QGraphicsDropShadowEffect()
+        logo_glow.setBlurRadius(40)
+        logo_glow.setColor(QColor(0, 255, 255, 120))  # Cyan glow
+        logo_glow.setOffset(0, 0)
+        self.logo_label.setGraphicsEffect(logo_glow)
 
-        for btn in [
-            self.btn_crud,
-            self.btn_staff_scheduling,
-            self.btn_accadimic,
-            self.btn_resaults_processing,
-            self.btn_reports,
-            self.btn_audit,
-        ]:
+        logo_layout.addWidget(self.logo_label)
+        sidebar_layout.addWidget(self.logo_container)
+
+        # Minimalist Brand Text
+        brand_label = QLabel("NSCS MANAGEMENT")
+        brand_label.setObjectName("brandLabel")
+        brand_label.setAlignment(Qt.AlignCenter)
+        sidebar_layout.addWidget(brand_label)
+
+        sidebar_layout.addSpacing(40)
+
+        # Navigation
+        self.btn_group = []
+        nav_items = [
+            ("DATA CORE MANAGMENT ", self.show_crud_menu),
+            ("SCUDUALING STAFF ", self.show_staff_scheduling),
+            ("ACADEMIC RECORDS ", self.show_academic_records),
+            ("RESULTS PROCESSING ", self.show_results_processing),
+            ("ANALYTICS", self.show_reports_analytics),
+            ("AUDIT LOGS", self.show_audit_records),
+        ]
+
+        for text, callback in nav_items:
+            btn = SideButton(text)
+            btn.clicked.connect(callback)
+            btn.clicked.connect(self.handle_nav_selection)
             sidebar_layout.addWidget(btn)
+            self.btn_group.append(btn)
+
         sidebar_layout.addStretch()
 
-
-        # 2. Content Area (Stacked Widget)
+        # --- MAIN CONTENT AREA ---
         self.content_stack = QStackedWidget()
-        label2 = QLabel(self)
-        pixmap = QPixmap(IMG_PATH)
-        label2.setPixmap(pixmap)
-        label2.setScaledContents(True)
-        self.content_stack.addWidget(label2)
+        self.content_stack.setObjectName("contentArea")
 
+        # Initial View (Put your nice background image here or a placeholder)
+        self.home_view = QLabel("UNIVERSITY  DATABASE \n MANAGMENT SYSTEM")
+        self.home_view.setAlignment(Qt.AlignCenter)
+        self.home_view.setObjectName("homeView")
+        self.content_stack.addWidget(self.home_view)
 
-        # 3. Add layouts to main
         main_layout.addWidget(self.sidebar)
         main_layout.addWidget(self.content_stack)
 
+    def apply_cyber_style(self):
+        self.setStyleSheet(
+            """
+            QMainWindow {
+                background-color: #020408;
+            }
+            #sidebar {
+                background-color: #05070a;
+                border-right: 1px solid #1a1f26;
+            }
+            #brandLabel {
+                color: #00ffff;
+                font-size: 10px;
+                font-weight: bold;
+                letter-spacing: 4px;
+                margin-top: 10px;
+            }
+            SideButton {
+                background-color: transparent;
+                color: #5d6d7e;
+                border: none;
+                border-radius: 4px;
+                text-align: left;
+                padding-left: 15px;
+                font-size: 12px;
+                font-weight: bold;
+                letter-spacing: 1px;
+            }
+            SideButton:hover {
+                color: #00ffff;
+                background-color: rgba(0, 255, 255, 0.05);
+            }
+            SideButton:checked {
+                color: #ffffff;
+                background-color: rgba(0, 255, 255, 0.1);
+                border-left: 3px solid #00ffff;
+            }
+            #contentArea {
+                background-color: #070b14;
+                margin: 10px;
+                border-radius: 20px;
+                border: 1px solid #1a1f26;
+            }
+            #homeView {
+                color: #1a1f26;
+                font-size: 40px;
+                font-weight: bold;
+                letter-spacing: 10px;
+            }
+        """
+        )
 
-        # Connect signals
-        self.btn_crud.clicked.connect(self.show_crud_menu)
-        self.btn_staff_scheduling.clicked.connect(self.show_staff_scheduling)  # ← ADD THIS
-        self.btn_reports.clicked.connect(self.show_reports_analytics)
-        self.btn_accadimic.clicked.connect(self.show_academic_records)
-        self.btn_resaults_processing.clicked.connect(self.show_results_processing)
-        self.btn_audit.clicked.connect(self.show_audit_records)
-
-
-    def init_UI(self):
-        pass
-
+    def handle_nav_selection(self):
+        sender = self.sender()
+        for btn in self.btn_group:
+            btn.setChecked(False)
+        sender.setChecked(True)
 
     def show_crud_menu(self):
-        crud_view_instance = crud_view.CrudView()
-        self.content_stack.addWidget(crud_view_instance)
-        self.content_stack.setCurrentWidget(crud_view_instance)
+        inst = crud_view.CrudView()
+        self.content_stack.addWidget(inst)
+        self.content_stack.setCurrentWidget(inst)
 
-    # ← ADD THIS METHOD
     def show_staff_scheduling(self):
-        reservation_view_instance = ReservationView(self)
-        self.content_stack.addWidget(reservation_view_instance)
-        self.content_stack.setCurrentWidget(reservation_view_instance)
+        inst = ReservationView(self)
+        self.content_stack.addWidget(inst)
+        self.content_stack.setCurrentWidget(inst)
 
     def show_reports_analytics(self):
-        reports_view_instance = Report_analytics()
-        self.content_stack.addWidget(reports_view_instance)
-        self.content_stack.setCurrentWidget(reports_view_instance)
-
+        inst = Report_analytics()
+        self.content_stack.addWidget(inst)
+        self.content_stack.setCurrentWidget(inst)
 
     def show_academic_records(self):
-        academic_view_instance = AcademicRecordsView(self)
-        self.content_stack.addWidget(academic_view_instance)
-        self.content_stack.setCurrentWidget(academic_view_instance)
-
-
+        inst = AcademicRecordsView(self)
+        self.content_stack.addWidget(inst)
+        self.content_stack.setCurrentWidget(inst)
 
     def show_audit_records(self):
-        audit_view_instance = AuditLogView(self)
-        self.content_stack.addWidget(audit_view_instance)
-        self.content_stack.setCurrentWidget(audit_view_instance)
+        inst = AuditLogView(self)
+        self.content_stack.addWidget(inst)
+        self.content_stack.setCurrentWidget(inst)
 
     def show_results_processing(self):
-        results_processing_view_instance = ResultsProcessingView(self)
-        self.content_stack.addWidget(results_processing_view_instance)
-        self.content_stack.setCurrentWidget(results_processing_view_instance)        
-
-
-def main():
-    app = QApplication(sys.argv)
-    with open('modern_theme.qss', 'r', encoding='utf-8') as f:
-        app.setStyleSheet(f.read())
-    window = MainWindow()
-    window.show()
-    sys.exit(app.exec_())
-
+        inst = ResultsProcessingView(self)
+        self.content_stack.addWidget(inst)
+        self.content_stack.setCurrentWidget(inst)
 
 
 if __name__ == "__main__":
-    main()
+    app = QApplication(sys.argv)
+    # This keeps your OTHER styles intact
+    try:
+        with open("modern_theme.qss", "r", encoding="utf-8") as f:
+            app.setStyleSheet(app.styleSheet() + f.read())
+    except:
+        pass
+
+    window = MainWindow()
+    window.show()
+    sys.exit(app.exec_())
